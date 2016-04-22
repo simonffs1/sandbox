@@ -1,32 +1,27 @@
 package start;
 
-import org.testng.Assert;
-import org.testng.Reporter;
-import org.testng.annotations.*;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-import org.testng.annotations.Listeners;
-import org.testng.asserts.SoftAssert;
-import com.gargoylesoftware.htmlunit.html.Keyboard;
-
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.internal.runners.statements.Fail;
 import org.openqa.selenium.By;
-import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+import org.testng.Reporter;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Listeners;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+import org.testng.asserts.SoftAssert;
 
 import io.appium.java_client.AppiumDriver;
 import io.appium.java_client.TouchAction;
@@ -67,7 +62,7 @@ public class Testscript extends androidInterface{
 	public void setup(String port) throws MalformedURLException, InterruptedException {
 		
 		File appDir = new File("src");
-		File app = new File(appDir, "ll-1.3.1.132-staging.apk");
+		File app = new File(appDir, "ll-1.4.2.147-staging.apk");
 		
 		//appium specific configuration
 		DesiredCapabilities cap = new DesiredCapabilities();
@@ -122,30 +117,24 @@ public class Testscript extends androidInterface{
 		
 		uploadSuccess = true; //reset back to original state
 		//Wait if on splash screen
+		
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/bottom_navigation_small_item_title")));
+		/*
 		String currentScreen = driver.currentActivity().toLowerCase();
 		while(currentScreen.contains("splash")){
 			System.out.println("On splash screen");
 			Thread.sleep(5000);
 			currentScreen = driver.currentActivity().toLowerCase();
 		}
+		*/
 		
-		
-		if(currentScreen.contains("explore")){
-			driver.pressKeyCode(AndroidKeyCode.BACK);
-		}
-		
-		checkToolBarTitle("Build");
-		dismissHint();
-		dismissNewsletter(false);
-		System.out.println("Starting on Build screen");
 	}
 	
 	@Test
-	public void sortByFilter(){
-		clickMenu();
-		clickMenuItem("Explore");
-		driver.findElement(By.id("com.sphero.sprk:id/explore_filter_toolbar_item")).click();
-		driver.findElementByXPath("//android.widget.LinearLayout[@index='0']").click();
+	public void SortBy(){
+		clickNavBar("programs");
+		driver.findElementById("com.sphero.sprk:id/spinner_text").click();
+		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/spinner_text' and @text='Date Oldest']").click();
 	}
 	
 	public void enablebluetoothDialog(){
@@ -584,33 +573,17 @@ public class Testscript extends androidInterface{
 		
 		testLogTitle("Edit My Programs while signed in");
 		
-		
-		
-		driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
 		//Check Edit title
-		String fragmentTitle = driver.findElement(By.id("com.sphero.sprk:id/dialog_title")).getText();
-		Assert.assertEquals(fragmentTitle, "Edit");
+		//String fragmentTitle = driver.findElement(By.id("com.sphero.sprk:id/dialog_title")).getText();
+		//Assert.assertEquals(fragmentTitle, "Edit");
+		
+		clickProgram();
+		
+		boolean wasPublic = false;
 		uploadSuccess=false;
-		//Click robots
-		driver.findElementById("com.sphero.sprk:id/choose_sphero").click();
-		driver.findElementById("com.sphero.sprk:id/choose_ollie").click();
-		driver.findElementById("com.sphero.sprk:id/choose_bb8").click();
-		//Clear fields and type
-		driver.findElementById("com.sphero.sprk:id/program_title").clear();
-		driver.findElementById("com.sphero.sprk:id/program_title").sendKeys("Edited the program title");
-		driver.pressKeyCode(AndroidKeyCode.BACK);
-		driver.findElementById("com.sphero.sprk:id/program_description").clear();
-		driver.findElementById("com.sphero.sprk:id/program_description").sendKeys("Edited the program description");
-		driver.pressKeyCode(AndroidKeyCode.BACK);
-		//Click switch and help icon
-		driver.findElementById("com.sphero.sprk:id/program_public_switch").click(); //*Keep track of switch status later
-		if(driver.findElementById("com.sphero.sprk:id/program_public_switch").getText().equals("ON")){
-			String status = driver.findElementById("com.sphero.sprk:id/status_text").getText();
-			Assert.assertEquals(status, "In Review");
-		}
-		driver.findElementById("com.sphero.sprk:id/public_program_help").click();
-		clickOk();
-		driver.findElementById("com.sphero.sprk:id/attach_media_text").click();
+		driver.findElementById("com.sphero.sprk:id/edit_button").click();
+		//aattach image
+		driver.findElementById("com.sphero.sprk:id/add_media_button").click();
 		//Image button
 		driver.findElementById("com.sphero.sprk:id/buttonDefaultPositive").click();
 		//Choose picture on Nexus (may vary between devices) *use try later for various file viewers
@@ -625,16 +598,45 @@ public class Testscript extends androidInterface{
 			touch.tap((int)(screenWidth*0.66),screenHeight/4).perform();
 		}
 		
-		driver.findElementById("com.sphero.sprk:id/dialog_action").click();
-		//if in review tap continue
-		try{
-			clickOk();
+		//current status
+		String currentStatus = driver.findElementById("com.sphero.sprk:id/status_text").getText();
+		//Click switch and help icon
+		driver.findElementById("com.sphero.sprk:id/program_public_switch").click(); //*Keep track of switch status later
+		String postStatus = driver.findElementById("com.sphero.sprk:id/status_text").getText();
+		if(driver.findElementById("com.sphero.sprk:id/program_public_switch").getText().equals("OFF")){
+			wasPublic = true;
+			Assert.assertEquals(postStatus, "Private");
 		}
-		catch(Exception e){
-			System.out.println("Not previously in review");
+		else if (driver.findElementById("com.sphero.sprk:id/program_public_switch").getText().equals("ON")){
+			Assert.assertEquals(postStatus, "In Review");
+		}
+		driver.findElementById("com.sphero.sprk:id/public_program_help").click();
+		clickOk();
+		
+		//Click robots
+		driver.findElementById("com.sphero.sprk:id/choose_sphero").click();
+		driver.findElementById("com.sphero.sprk:id/choose_ollie").click();
+		driver.findElementById("com.sphero.sprk:id/choose_bb8").click();
+		
+		if(screenHeight>screenWidth){
+			scrollVertical("down",500);
 		}
 		
+		//Clear fields and type
+		driver.findElementById("com.sphero.sprk:id/title").clear();
+		driver.findElementById("com.sphero.sprk:id/title").sendKeys("Edited the program title");
+		driver.pressKeyCode(AndroidKeyCode.BACK);
+		driver.findElementById("com.sphero.sprk:id/description").clear();
+		driver.findElementById("com.sphero.sprk:id/description").sendKeys("Edited the program description");
+		driver.pressKeyCode(AndroidKeyCode.BACK);
 
+		
+		driver.findElementById("com.sphero.sprk:id/dialog_action").click();
+		//if in review tap continue
+		if(wasPublic == true){
+			clickOk();
+		}
+		
 		//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("android:id/content")));
 		//waitLong.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/content")));
 		//System.out.println("Progress bar not visible");
@@ -642,7 +644,7 @@ public class Testscript extends androidInterface{
 		
 		waitLong.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/toolbar_title")));
 		//check if able to go back to build, if not upload failed
-		if(driver.findElementsById("com.sphero.sprk:id/dialog_title").size()==0){
+		if(driver.findElementsById("com.sphero.sprk:id/share_container").size()==0){
 			uploadSuccess=true;
 			System.out.println("Upload success");
 		}
@@ -663,10 +665,7 @@ public class Testscript extends androidInterface{
 	public void copyMyProgram(){
 		testLogTitle("Copy My Programs while signed in");
 		int numOfProg = countProgram();
-		driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
-		//Check Edit title
-		String fragmentTitle = driver.findElement(By.id("com.sphero.sprk:id/dialog_title")).getText();
-		Assert.assertEquals(fragmentTitle, "Edit");
+		clickProgram();
 		driver.findElementById("com.sphero.sprk:id/copy_button").click();
 		clickOk(); //confirm
 		clickOk(); //ok
@@ -841,92 +840,7 @@ public void scrollToBottom() throws Exception{
 		checkToolBarTitle("Build");
 	}
 	
-	
-	@Test
-	public void gesturePocketNav(){
-		testLogTitle("Pocket Nav open by gesture");
-		int startx = 1; 
-		int starty = screenHeight / 2; 
-		int endx = (int) ((screenWidth * 0.7)); 
-		driver.swipe(startx, starty, endx, starty, 500);
-		driver.findElementById("com.sphero.sprk:id/settings");
-		System.out.println("Found Settings, pocketNav Open");
-		//Phone
-		/*
-		if(height>width){
-			driver.tap(1, width-10, height/2, 100);
-		}
-		else{
-			//Tablet
-			driver.tap(1, size.width/2, size.height/2, 100);
-		}
-		*/
-		driver.findElementById("com.sphero.sprk:id/floating_add_new_program_button").click();
-		System.out.println("Tapped outside to dismiss");
-		wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/settings")));
-		System.out.println("Settings could not be found, pocketNav closed");
-	}
 
-	@Test
-	public void pocketNav() throws Exception{
-		testLogTitle("Pocket Nav click all items");
-		//Click Sample programs tab then My Programs
-		System.out.println("Go to Sample Programs tab and back to Build");
-		clickSampleProgramsTab();
-		clickMyProgramsTab();
-		//Open Pocket Nav
-		clickMenu();
-		//Go to Profile
-		try{
-			clickPocketNavSignIn();
-		}
-		catch(Exception e){
-			System.out.println("Already signed in");
-		}
-		System.out.println("View Profile title found");
-		clickCloseSignIn();
-		clickMenu();
-		
-		//Go to Connect robot
-		try{
-		driver.findElementById("com.sphero.sprk:id/header_not_connected").click();
-		}
-		catch(Exception e){
-			driver.findElementById("com.sphero.sprk:id/header").click();
-		}
-		
-		clickClose();
-		goToActivity("explore");
-		dismissHint();
-		
-		//click tabs
-		clickMediaTab();
-		clickTwitterTab();
-		clickExploreTab();
-	
-		//Go to Drive
-		goToActivity("drive");
-		driver.pressKeyCode(AndroidKeyCode.BACK);
-		Thread.sleep(2000);
-		//Go to Settings
-		clickMenu();
-		driver.findElementById("com.sphero.sprk:id/settings").click();
-		verifyToolbar("settings");
-		//Go to Build
-		clickMenu();
-		clickMenuItem("Build");
-		
-		if(screenWidth>screenHeight){
-			driver.findElementById("com.sphero.sprk:id/drive_toolbar_item").click();
-			wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/background")));
-			System.out.println("Drive tool bar button opened drawer");
-			clickMyProgramsTab();
-			clickMenu();
-			clickMenuItem("Build");
-		}
-
-		
-	}
 	
 	@Test//(invocationCount=10)
 	public void viewExploreProgram() throws Exception{
@@ -937,13 +851,21 @@ public void scrollToBottom() throws Exception{
 		
 		int numOfProg = countProgram();
 		
-		clickMenu();
-		clickMenuItem("Explore");
-		dismissHint();
+		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='Community']").click();
 		
 		clickProgram();
-		//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/dialog_title")));
-		//handle progress indicator blocking tap
+		
+		//verify screen element presence
+		driver.findElement(By.id("com.sphero.sprk:id/share_button"));
+		driver.findElement(By.id("com.sphero.sprk:id/single_image"));
+		driver.findElement(By.id("com.sphero.sprk:id/photo"));
+		driver.findElement(By.id("com.sphero.sprk:id/name"));
+		driver.findElement(By.id("com.sphero.sprk:id/robot_section"));
+		driver.findElement(By.id("com.sphero.sprk:id/favourite_section"));
+		driver.findElement(By.id("com.sphero.sprk:id/flag_section"));
+		driver.findElement(By.id("com.sphero.sprk:id/dialog_close"));
+		
+		
 		try{
 			driver.findElements(By.id("com.sphero.sprk:id/progress_bar"));
 			System.out.println("Spinner was found");
@@ -973,7 +895,7 @@ public void scrollToBottom() throws Exception{
 			if(progress==true){
 				wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/progress_bar")));
 			}
-			driver.findElementById("com.sphero.sprk:id/program_details_image").click();
+			driver.findElementById("com.sphero.sprk:id/single_image").click();
 			try{
 				driver.findElementById("com.sphero.sprk:id/fullscreen_image");
 				System.out.println("Full screen image opened");
@@ -988,47 +910,35 @@ public void scrollToBottom() throws Exception{
 			//implement view video
 		}
 		
-		driver.findElementById("com.sphero.sprk:id/program_details_image");
+		driver.findElementById("com.sphero.sprk:id/single_image");
 		clickView();
 		Thread.sleep(2000);
 		if(driver.currentActivity().toLowerCase().contains("unity")){
 			leaveCanvas();
-			checkToolBarTitle("Explore");
-			dismissHint();
-			driver.pressKeyCode(AndroidKeyCode.BACK); // Return to Build
-			checkToolBarTitle("Build");
+			driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='My Programs']").click();
 			Assert.assertEquals(numOfProg, countProgram());
 		}
 		else{
 			clickNo(); // close invalid lab file prompt
 			clickClose(); //close program details
-			driver.pressKeyCode(AndroidKeyCode.BACK); // Return to Build
-			checkToolBarTitle("Build");
+			driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='My Programs']").click();
 			Reporter.log("Viewed an invalid format lab file, did not enter canvas");
+			System.out.println("Invalid lab file");
 		}
 	}
 	
-	@Test(dataProvider = "data-provider",invocationCount=10)
+	@Test(dataProvider = "data-provider")
 	public void viewExploreVideo(String section){
 		testLogTitle("View video in Explore Programs");
 		
 		Boolean videoFound = false;
-		clickMenu();
-		clickMenuItem("Explore");
-		dismissHint();
-		if(section.toLowerCase().equals("media")){
-			clickMediaTab();
-		}
+		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='Community']").click();
 		
 		while(videoFound==false){
 			try{
 				driver.findElementById("com.sphero.sprk:id/video_badge").click();
-				if(section.toLowerCase().equals("media")){
-					driver.findElementById("com.sphero.sprk:id/media_video_overlay").click(); //media
-				}
-				else{
-					driver.findElementById("com.sphero.sprk:id/playable_media_overlay").click(); //program 
-				}
+				driver.findElementById("com.sphero.sprk:id/playable_media_overlay").click(); //program 
+			
 				videoFound=true;
 				System.out.println("Clicked video play icon");
 				
@@ -1060,8 +970,7 @@ public void scrollToBottom() throws Exception{
 			scrollVertical("down",1500);
 		}
 		clickClose();
-		clickMenu();
-		clickMenuItem("Build");
+		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='My Programs']").click();
 	}
 	
 	@Test
@@ -1070,10 +979,8 @@ public void scrollToBottom() throws Exception{
 		testLogTitle("Copy Explore Programs");
 		
 		int numOfProg = countProgram();
-		dismissHint();
+		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='Community']").click();
 		
-		clickMenu();
-		clickMenuItem("explore");
 		clickProgram();
 		clickClose();
 		clickProgram();
@@ -1081,8 +988,6 @@ public void scrollToBottom() throws Exception{
 		clickOk();//confirm name
 		try{
 			clickOk(); //ok
-			checkToolBarTitle("Explore");
-			
 		}
 		catch(Exception e){
 			clickNo();
@@ -1091,102 +996,14 @@ public void scrollToBottom() throws Exception{
 			clickClose();
 			Reporter.log("Tried to copy invalid lab file");
 		}
-		driver.pressKeyCode(AndroidKeyCode.BACK); // Return to Build
-		checkToolBarTitle("build");
+		
+		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='My Programs']").click();
 		int numOfProgPost = countProgram();
 		Assert.assertEquals(numOfProgPost, numOfProg+1);
 		System.out.println("Copy of public program exists");
 	}
-	
-	@Test
-	public void viewMedia() throws Exception{
-		
-		testLogTitle("View Media");
-		Boolean progress = false;
-		
-		clickMenu();
-		clickMenuItem("Explore");
-		dismissHint();
-		//Click on Media
-		clickMediaTab();
-		//Compare program and title name
-		//String programName = driver.findElementById("com.sphero.sprk:id/program_name").getText();
-		driver.findElementById("com.sphero.sprk:id/program_name").click();
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/dialog_title")));
-		Thread.sleep(2000);
-		try{
-			driver.findElements(By.id("com.sphero.sprk:id/progress_bar"));
-			System.out.println("Spinner was found");
-			progress = driver.findElements(By.id("com.sphero.sprk:id/progress_bar")).size()>0;
-		}
-		catch(Exception preload){
-			System.out.println("No spinner was found");
-		}
-		
-		//handle progress indicator blocking tap
-		/*
-		try{
-			Boolean progress = driver.findElements(By.id("com.sphero.sprk:id/progress_bar")).size()>0;
-			if(progress == true){
-				System.out.println("Waiting for progress spinner to disappear");
-				while(driver.findElement(By.id("com.sphero.sprk:id/progress_bar")).isDisplayed()){
-					Thread.sleep(2000);
-				}
-			}
-		}
-		catch(Exception e){
-			System.out.println("No progress indicator was found");
-		}
-		*/
-		if(driver.findElements(By.id("com.sphero.sprk:id/media_video_overlay")).size()==0){
-			if(progress==true){
-				wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/progress_bar")));
-			}
-			if(progress==false){
-				driver.findElementById("com.sphero.sprk:id/media_image").click();
-				try{
-					driver.findElementById("com.sphero.sprk:id/fullscreen_image");
-				}
-				catch(Exception e){
-					driver.findElementById("com.sphero.sprk:id/media_image");
-					driver.pressKeyCode(AndroidKeyCode.BACK);
-					checkToolBarTitle("Explore");
-					driver.pressKeyCode(AndroidKeyCode.BACK); // Return to Build
-					checkToolBarTitle("Build");
-					Assert.fail("Image did not go to full screen");
-				}
-				System.out.println("Full screen image opened");
-				driver.pressKeyCode(AndroidKeyCode.BACK);
-				driver.findElementById("com.sphero.sprk:id/media_image");
-			}
-		}
-		
-		/*
-		
-		int tapCount=0;
-		//Click it repeatedly if spinner was seen
-		while(progress==true && tapCount<20){
-			try{
-				driver.findElementById("com.sphero.sprk:id/media_image").click();
-				tapCount++;
-				driver.findElementById("com.sphero.sprk:id/fullscreen_image");
-				System.out.println("Full screen image opened");
-				break;
-			}
-			catch(Exception e){
-				System.out.println("Could not open image full screen");
-			}
-		}
-		*/
-		
-		
-		driver.pressKeyCode(AndroidKeyCode.BACK);
-		
-		
-		checkToolBarTitle("Explore");
-		driver.pressKeyCode(AndroidKeyCode.BACK); // Return to Build
-		checkToolBarTitle("Build");
-	}
+
+
 	
 	@Test
 	public void postMedia() throws Exception{

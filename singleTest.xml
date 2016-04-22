@@ -6,11 +6,7 @@
   	<classes>
   	    <class name="start.Testscript">
   	        <methods>
-  	            <include name="scrollToBottom"/>
-  	            <include name="testCommit"/>
-  	            <include name="test2Thing"/>
-  	            <include name="frommymac"/>
-  	            <include name="frommypc"/>
+  	            <include name="SortBy"/>
   	        </methods>
   	    </class>
   	</classes>

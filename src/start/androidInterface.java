@@ -23,6 +23,65 @@ public class androidInterface implements clickableObjects {
 	
 	String connect = "hey";
 
+	public void clickNavBar(String item){
+		
+		List <WebElement> allNavBar;
+		List <WebElement> allTabs;
+		
+		//click on the nav bar item
+		allNavBar = driver.findElements(By.id("com.sphero.sprk:id/bottom_navigation_small_container"));
+	
+		if (item.toLowerCase().equals("account")){
+			allNavBar.get(0).click();
+			
+			}
+		else if (item.toLowerCase().equals("programs")){
+			allNavBar.get(1).click();
+		}
+		else if (item.toLowerCase().equals("activities")){
+			allNavBar.get(2).click();
+			
+		}
+		else if (item.toLowerCase().equals("drive")){
+			allNavBar.get(3).click();
+		}
+		else{
+			System.out.println("Not a valid item in the nav bar");
+		}
+		
+		//chcek the name of the button is shown to match expected
+		driver.findElementById("com.sphero.sprk:id/bottom_navigation_small_item_title").getText().toLowerCase().equals(item);
+		
+		allTabs = driver.findElements(By.xpath("//android.support.v7.a.d/android.widget.TextView"));
+		
+		//verify expected tabs
+		if(item.toLowerCase().equals("account")){
+		allTabs.get(0).getText().toLowerCase().equals("dashboard");
+		allTabs.get(1).getText().toLowerCase().equals("profile");
+		allTabs.get(2).getText().toLowerCase().equals("settings");
+		}
+		else if(item.toLowerCase().equals("programs")){
+		allTabs.get(0).getText().toLowerCase().equals("my programs");
+		allTabs.get(1).getText().toLowerCase().equals("sphero");
+		allTabs.get(2).getText().toLowerCase().equals("community");
+		}
+		else if(item.toLowerCase().equals("activities")){
+		allTabs.get(0).getText().toLowerCase().equals("my activities");
+		allTabs.get(1).getText().toLowerCase().equals("sphero");
+		allTabs.get(2).getText().toLowerCase().equals("community");
+		allTabs.get(3).getText().toLowerCase().equals("innovators");
+		}
+	}
+	
+	public void clickTab(String s){
+		List <WebElement> tabs = driver.findElements(By.xpath("//android.support.v7.a.d/android.widget.TextView"));
+		for(WebElement temp:tabs){
+			if (temp.getText().equals(s.toLowerCase())){
+				temp.click();
+			}
+		}
+	}
+	
 	public void clickMenu(){
 		driver.findElementByXPath("//*[@class='android.widget.ImageButton' and @index='0']").click();	
 		System.out.println("Clicked on menu");
