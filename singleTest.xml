@@ -2,11 +2,15 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Suite" parallel="false" preserve-order="true">
 <parameter name="port" value="4723"/>
+ <parameter name="instructor_username" value="ffsi5"/>
+ <parameter name="password" value="yyyyyy"/>
+ <parameter name="instructor_email" value="ffsqatsignup+i5@gmail.com"/>
+ 
   <test name="Single test">
   	<classes>
   	    <class name="start.Testscript">
   	        <methods>
-  	            <include name="Settings"/>
+  	            <include name="signUpInstructor"/>
   	        </methods>
   	    </class>
   	</classes>

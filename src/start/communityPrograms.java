@@ -8,8 +8,61 @@ import org.testng.annotations.Test;
 
 import io.appium.java_client.android.AndroidKeyCode;
 
-public class communityPrograms extends Testscript {
+public class communityPrograms extends myPrograms {
 
+	
+	@Test //open a sample program and copy
+	public void copySampleProgram() throws Exception{
+		testLogTitle("View and Copy a Sample Program");
+		int numOfProg = countProgram();
+		clickSampleProgramsTab();
+		clickProgram();
+		clickCopy();
+		clickButton("yes"); //confirm
+		clickButton("yes"); //ok
+		checkToolBarTitle("Build");
+		clickMyProgramsTab();
+		int numOfProgPost = countProgram();
+		Assert.assertEquals(numOfProgPost, numOfProg+1);
+		System.out.println("A copy of the sample program has been made");
+	}
+	
+	@Test //open a sample program and copy
+	public void copySampleProgramRepeatedly() throws Exception{
+		testLogTitle("View and Copy a Sample Program");
+		int numOfProg = 0;
+		
+		clickSampleProgramsTab();
+		//driver.findElementByXPath("//*[@class='android.support.v7.app.ActionBar$Tab' and @index='1']").click();
+		//driver.findElementsByXPath("//android.support.v7.app.ActionBar$Tab[@index='1']");
+		while(numOfProg<=500){
+			clickProgram();
+			clickCopy();
+			clickButton("yes"); //confirm
+			clickButton("yes"); //ok
+			System.out.println("Program # " + numOfProg +"has been made");
+			numOfProg++;
+		}
+	}
+	
+	@Test
+	public void viewSampleProgram() throws Exception{
+		testLogTitle("View a Sample Program");
+		int numOfProg = countProgram();
+		//click sample programs tab
+		clickSampleProgramsTab();
+		//click the first sample program
+		clickProgram();
+		//click view
+		clickView();
+		leaveCanvas();
+		checkToolBarTitle("Build");
+		clickMyProgramsTab();
+		int numOfProgPost = countProgram();
+		Assert.assertEquals(numOfProgPost, numOfProg);
+		System.out.println("No copy is made viewing a program");
+	}
+	
 	@Test
 	//@Parameters("section")
 	(dataProvider = "data-provider")
@@ -35,8 +88,6 @@ public class communityPrograms extends Testscript {
 		clickMenu();
 		clickMenuItem("explore");
 	
-		dismissHint();
-		
 		if(section.toLowerCase().equals("media")){
 			clickMediaTab();
 		}

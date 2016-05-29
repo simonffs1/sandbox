@@ -19,17 +19,41 @@ public class myPrograms extends Testscript {
 		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/spinner_text' and @text='Date Oldest']").click();
 	}
 	
+	//Unit test for counting programs
+	public int countProgram(){
+		String xpath = "//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout";
+		List <WebElement> ListByXpath = driver.findElements(By.xpath(xpath));
+		return ListByXpath.size();   
+	}
+	
+	//@Test
+	public void countPrograms(){
+		String xpath = "//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout";
+		List <WebElement> ListByXpath = driver.findElements(By.xpath(xpath));
+		System.out.println(ListByXpath.size());
+	}
+	
 	@Test
-	public void createProgram(){
+	public void createProgram() throws Exception{
 		testLogTitle("Create a program");
-		int initialprograms = countProgram();
+		
+		clickNavBar("Programs");
+		int initialprograms = 0;
+	
+		if(driver.findElementsByXPath("//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout").size()>0){
+			initialprograms = countProgram();
+		}
+		else{
+			//check for no proggrams message
+			driver.findElementById("com.sphero.sprk:id/no_content_message");
+		}
 		System.out.println(initialprograms);
 		clickAddNewProgram();
-		sendKeys("Program created by automation!");
+		driver.findElementById("com.sphero.sprk:id/edit_text").sendKeys("Created by automation");
+		//sendKeys("Program created by automation!");
 		//Tap Save
-		clickButton("yes");
+		clickButton("save");
 		leaveCanvas();
-		checkToolBarTitle("Build");
 		//Check if program count has increased by 1
 		int currentprograms = countProgram();
 		System.out.println(currentprograms);
@@ -44,16 +68,19 @@ public class myPrograms extends Testscript {
 	
 	@Test 
 	public void copyMyProgram(){
+		clickNavBar("Programs");
+		
 		testLogTitle("Copy My Programs while signed in");
 		int numOfProg = countProgram();
-		clickProgram();
+		clickProgram(); //click first program
 		driver.findElementById("com.sphero.sprk:id/copy_button").click();
-		clickButton("yes"); //confirm
-		clickButton("yes"); //ok
-		wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/dialog_title")));
-		//driver.findElementByName("Programming Tutorial");
+		clickButton("save"); //confirm
+		clickButton("ok"); //ok
+		clickButton("x");
+		
+		//wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/dialog_title")));
 		Assert.assertEquals(countProgram(), numOfProg+1);
-		System.out.println("Program has been copied");
+		System.out.println("Program copied successfully");
 		//*check name 
 	}
 	
@@ -63,9 +90,8 @@ public class myPrograms extends Testscript {
 		
 		testLogTitle("Edit My Programs while signed in");
 		
-		//Check Edit title
-		//String fragmentTitle = driver.findElement(By.id("com.sphero.sprk:id/dialog_title")).getText();
-		//Assert.assertEquals(fragmentTitle, "Edit");
+		
+		clickNavBar("Programs");
 		
 		clickProgram();
 		
@@ -75,12 +101,13 @@ public class myPrograms extends Testscript {
 		//aattach image
 		driver.findElementById("com.sphero.sprk:id/add_media_button").click();
 		//Image button
-		driver.findElementById("com.sphero.sprk:id/buttonDefaultPositive").click();
+		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/title' and @text='Image']").click();
 		//Choose picture on Nexus (may vary between devices) *use try later for various file viewers
 		try{
 			waitShort.until(ExpectedConditions.presenceOfElementLocated(By.id("com.android.documentsui:id/icon_thumb")));
 			driver.findElementById("com.android.documentsui:id/icon_thumb").click();
 		}
+		//samsung
 		catch(Exception e){
 			System.out.println("Device is not using stock android document UI");
 			touch.tap((int)(screenWidth*0.50), (int)(screenHeight/4)).perform();
@@ -91,26 +118,25 @@ public class myPrograms extends Testscript {
 		//current status
 		String currentStatus = driver.findElementById("com.sphero.sprk:id/status_text").getText();
 		//Click switch and help icon
-		driver.findElementById("com.sphero.sprk:id/program_public_switch").click(); //*Keep track of switch status later
+		driver.findElementById("com.sphero.sprk:id/public_switch").click(); //*Keep track of switch status later
 		String postStatus = driver.findElementById("com.sphero.sprk:id/status_text").getText();
-		if(driver.findElementById("com.sphero.sprk:id/program_public_switch").getText().equals("OFF")){
+		if(driver.findElementById("com.sphero.sprk:id/public_switch").getText().equals("OFF")){
 			wasPublic = true;
 			Assert.assertEquals(postStatus, "Private");
 		}
-		else if (driver.findElementById("com.sphero.sprk:id/program_public_switch").getText().equals("ON")){
+		else if (driver.findElementById("com.sphero.sprk:id/public_switch").getText().equals("ON") && !currentStatus.equals("Public")){
 			Assert.assertEquals(postStatus, "In Review");
 		}
-		driver.findElementById("com.sphero.sprk:id/public_program_help").click();
+		driver.findElementById("com.sphero.sprk:id/help_button").click();
 		clickButton("yes");
 		
 		//Click robots
-		driver.findElementById("com.sphero.sprk:id/choose_sphero").click();
-		driver.findElementById("com.sphero.sprk:id/choose_ollie").click();
-		driver.findElementById("com.sphero.sprk:id/choose_bb8").click();
+		driver.findElementById("com.sphero.sprk:id/sphero_button").click();
+		driver.findElementById("com.sphero.sprk:id/ollie_button").click();
+		driver.findElementById("com.sphero.sprk:id/bb8_button").click();
 		
-		if(screenHeight>screenWidth){
-			scrollVertical("down",500);
-		}
+		
+		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.3), 500);
 		
 		//Clear fields and type
 		driver.findElementById("com.sphero.sprk:id/title").clear();
@@ -132,9 +158,9 @@ public class myPrograms extends Testscript {
 		//System.out.println("Progress bar not visible");
 		
 		
-		waitLong.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/toolbar_title")));
+		waitLong.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/dialog_title")));
 		//check if able to go back to build, if not upload failed
-		if(driver.findElementsById("com.sphero.sprk:id/share_container").size()==0){
+		if(driver.findElementById("com.sphero.sprk:id/status_text").getText().equals(postStatus) && driver.findElementById("com.sphero.sprk:id/body").getText().equals("Edited the program description")) {
 			uploadSuccess=true;
 			System.out.println("Upload success");
 		}
@@ -145,6 +171,7 @@ public class myPrograms extends Testscript {
 			//clickButton("yes"); //close discard change dialog
 			System.out.println("Upload failed");
 		}
+		clickButton("x");
 
 		//touch.press(10,(driver.manage().window().getSize().getHeight())/2);
 		//*Add discard dialog test case here later
@@ -155,33 +182,50 @@ public class myPrograms extends Testscript {
 	@Test 
 	public void deleteMyProgramSignIn(){
 		testLogTitle("Delete Programs while signed in");
+		
+		clickNavBar("programs");
+		
 		int numOfProg = countProgram();
-		driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
+		clickProgram();
+		
 		//Check Edit title
-		String fragmentTitle = driver.findElement(By.id("com.sphero.sprk:id/dialog_title")).getText();
-		Assert.assertEquals(fragmentTitle, "Edit");
+		driver.findElementById("com.sphero.sprk:id/edit_button").click();
+		driver.findElementById("com.sphero.sprk:id/dialog_action");
+		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.3), 500);
 		driver.findElementById("com.sphero.sprk:id/delete_button").click();
-		clickButton("yes");
-		checkToolBarTitle("Build");
+		clickButton("delete");
 		Assert.assertEquals(countProgram(), numOfProg-1);
-		System.out.println("Program has been deleted");
+		System.out.println("Program deleted successfully");
 		//*check name
 	}
 	
 	@Test
-	public void deleteRenameProgramSignedOut(){
+	public void deleteRenameProgramSignedOut() throws Exception{
 		testLogTitle("Delete Programs while signed in");
+		
+		clickNavBar("programs");
+		
 		int initialprograms = countProgram();
 		System.out.println(initialprograms);
-		driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
+		clickProgram();
+		
+		//Tap View
+		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/title' and @text='View Program']").click();
+		leaveCanvas();
+		System.out.println("Program viewed successfully");
+		
 		//Tap Rename
-		driver.findElementByXPath("//*[@class='android.widget.LinearLayout' and @index='0']").click();
+		clickProgram();
+		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/title' and @text='Rename Program']").click();
 		driver.findElementById("com.sphero.sprk:id/edit_text").clear();
-		sendKeys("Program renamed by automation!");
-		clickButton("yes");
-		driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
-		//Tap Delete and confirm
-		driver.findElementByXPath("//*[@class='android.widget.LinearLayout' and @index='1']").click();
+		driver.findElementById("com.sphero.sprk:id/edit_text").sendKeys("Renamed by auto");
+		clickButton("save");
+		driver.findElementById("com.sphero.sprk:id/program_name").getText().contains("Renamed by auto");
+		System.out.println("Program renamed successfully");
+		
+		//Tap Delete
+		clickProgram();
+		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/title' and @text='Delete Program']").click();
 		clickButton("yes");
 		System.out.println(countProgram());
 		Assert.assertEquals(countProgram(),initialprograms-1);
@@ -190,35 +234,27 @@ public class myPrograms extends Testscript {
 	
 	//@Test //(dependsOnMethods={'signIn'}
 	public void deleteAllPrograms(){
+		
+		clickNavBar("programs");
+		
+		int count = 0;
 		while (countProgram()>1){
 			deleteMyProgramSignIn();
+			count++;
 		}
-		System.out.println("All programs deleted");
+		System.out.println("All programs (" + count + ") deleted");
 	}
 	
-	@Test 
-	public void deleteAll(){
-		testLogTitle("Delete Programs while signed in");
-		int programCount = 0;
-		while(countProgram()>1){
-		driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
-		String fragmentTitle = driver.findElement(By.id("com.sphero.sprk:id/dialog_title")).getText();
-		Assert.assertEquals(fragmentTitle, "Edit");
-		driver.findElementById("com.sphero.sprk:id/delete_button").click();
-		clickButton("yes");
-		checkToolBarTitle("Build");
-		programCount++;
-		//Assert.assertEquals(countProgram(), numOfProg-1);
-		}
-		System.out.println("Deleted all "+programCount+" Programs");
-	}
 	
 	@Test 
 	public void deleteAllProgramsSignedOut() throws Exception{
+		
+		clickNavBar("programs");
+		
 		while (countProgram()>1){
-			driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
-			driver.findElementByXPath("//*[@class='android.widget.LinearLayout' and @index='1']").click();
-			driver.findElementById("com.sphero.sprk:id/buttonDefaultPositive").click();
+			clickProgram();
+			driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/title' and @text='Delete Program']").click();
+			clickButton("yes");
 			Thread.sleep(500);
 			System.out.println(countProgram());
 		}
@@ -280,7 +316,7 @@ public class myPrograms extends Testscript {
 	}
 	
 	@Test
-	public void publicProgramGate(){
+	public void publicProgramGate() throws Exception{
 		
 		checkPublicProgramOrder();
 		//overflow button for public
@@ -314,7 +350,7 @@ public class myPrograms extends Testscript {
 		//goToActivity("explore");
 		
 		//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/toolbar_title")));
-		dismissHint();
+		
 		//Click on the first program
 		clickProgram();
 		//Wait for the drawer to appear

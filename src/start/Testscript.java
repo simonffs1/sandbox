@@ -9,6 +9,7 @@ import java.util.concurrent.TimeUnit;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -47,7 +48,8 @@ public class Testscript extends androidInterface{
 	WebDriverWait waitLong;
 	Boolean uploadSuccess;
 	Boolean signedIn;
-	//FirefoxDriver web;
+	Boolean signedUp;
+	FirefoxDriver web;
 	private SoftAssert softAssert = new SoftAssert();
 	
 	//device screen
@@ -69,6 +71,7 @@ public class Testscript extends androidInterface{
 		cap.setCapability(MobileCapabilityType.PLATFORM_NAME, MobilePlatform.ANDROID);
 		cap.setCapability(MobileCapabilityType.DEVICE_NAME,"Android device");
 		cap.setCapability(MobileCapabilityType.APP,app.getAbsolutePath());
+		cap.setCapability("newCommandTimeout", 240); //prevent server time out for 240 seconds
 		
 		//create objects
 		driver = new AndroidDriver(new URL("http://127.0.0.1:"+port+"/wd/hub"),cap);
@@ -77,10 +80,10 @@ public class Testscript extends androidInterface{
 		waitShort = new WebDriverWait(driver,10);
 		waitLong = new WebDriverWait(driver,240);
 		touch = new TouchAction(driver);
-		//web = new FirefoxDriver();
-		//web.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		
 		uploadSuccess = true;
 		signedIn = false;
+		signedUp = false;
 		
 		screenHeight = driver.manage().window().getSize().getHeight();
 		screenWidth = driver.manage().window().getSize().getWidth();
@@ -104,18 +107,19 @@ public class Testscript extends androidInterface{
 		
 		System.out.println(driver.currentActivity());
 		
+		
+		
 		//sign out if signed in
+		
 		if(driver.findElements(By.id("com.sphero.sprk:id/sign_in_button")).size()==0){
 			System.out.println("Sign in button not found, signed in");
 			//Sign out process
-			clickTab("Profile");
-			clickButton("Sign out");
-			clickButton("positive");
-			wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("android:id/progress")));
-			driver.findElements(By.id("com.sphero.sprk:id/sign_in_button"));
-			driver.findElements(By.id("com.sphero.sprk:id/sign_in_text"));
-			clickTab("Feed");
+			//signOut();
+			signedIn=true;
+			clickTab("feed");	
 		}
+		
+		
 	
 	}
 	
@@ -184,7 +188,7 @@ public class Testscript extends androidInterface{
         clickTab("Profile");
         clickButton("Sign in");
         //Click the sign in button within the get started fragment
-        driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/fragment_container']//*[@resource-id='com.sphero.sprk:id/sign_in_button']").click();
+        clickButton("Sign in");
         System.out.println("Clicked Sign in button on Get Started");
         
         //Regular sign in
@@ -197,8 +201,7 @@ public class Testscript extends androidInterface{
             driver.findElementById("com.sphero.sprk:id/password_et").sendKeys(password);
             System.out.println("Entered password");
             driver.hideKeyboard();
-            driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/fragment_container']//*[@resource-id='com.sphero.sprk:id/sign_in_button']").click();
-            System.out.println("Clicked Sign In button on Sign In");
+            clickButton("Sign in");
             
         }
         //Clever sign in
@@ -296,9 +299,17 @@ public class Testscript extends androidInterface{
 	
 	@Test
 	public void signUp12YearsUnder(){
-		clickMenu();
-		clickPocketNavSignIn();
-		driver.findElementById("com.sphero.sprk:id/sign_up_button").click();
+		
+		if(signedIn==true){
+			signOut();
+		}
+		
+		clickNavBar("home");
+		clickTab("profile");
+		
+		clickButton("sign in");
+		clickButton("sign up");
+		
 		driver.findElementById("com.sphero.sprk:id/select_student").click();
 		driver.findElementById("com.sphero.sprk:id/continue_button").click();
 		driver.findElementById("com.sphero.sprk:id/initials_et").sendKeys("abc");
@@ -308,15 +319,22 @@ public class Testscript extends androidInterface{
 		driver.findElementById("com.sphero.sprk:id/request_access_button").click();
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/continue_button")));
 		driver.findElementById("com.sphero.sprk:id/continue_button").click();
-		checkToolBarTitle("Build");
+		driver.findElement(By.id("com.sphero.sprk:id/sign_in_button"));
 	}
 	
 	@Parameters({"student_username","student_email","password"})
 	@Test
 	public void signUp13Years(String student_username,String student_email,String password) throws Exception{
-		clickMenu();
-		clickPocketNavSignIn();
-		driver.findElementById("com.sphero.sprk:id/sign_up_button").click();
+		
+		if(signedIn==true){
+			signOut();
+		}
+		clickNavBar("home");
+		clickTab("profile");
+		
+		clickButton("sign in");
+		clickButton("sign up");
+		
 		driver.findElementById("com.sphero.sprk:id/select_student").click();
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("android:id/pickers")));
 		driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").click();
@@ -333,9 +351,8 @@ public class Testscript extends androidInterface{
 		
 		driver.hideKeyboard();
 		driver.findElementById("com.sphero.sprk:id/continue_button").click();
-		
 		driver.findElementById("com.sphero.sprk:id/class_name_helper").click();
-		driver.findElementById("com.sphero.sprk:id/buttonDefaultNeutral").click();
+		clickButton("ok");
 		//driver.findElementById("com.sphero.sprk:id/class_name_et").clear();
 		//driver.findElementById("com.sphero.sprk:id/class_name_et").sendKeys("classname");
 		driver.findElementById("com.sphero.sprk:id/reenter_password_et").sendKeys(password);
@@ -346,26 +363,55 @@ public class Testscript extends androidInterface{
 		Thread.sleep(2000); //sign up button to shift
 		driver.findElementById("com.sphero.sprk:id/create_account_button").click();
 		
+		//newsletter screen
+		driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").getAttribute("checked"), "true"); 
+		driver.findElementById("com.sphero.sprk:id/privacy_policy_button").click();
+		try{
+			driver.findElementById("android:id/button_once").click();
+		}
+		catch(Exception e){
+			System.out.println("Just once/Always not found");
+		}
+		String site = driver.findElementById("com.android.chrome:id/url_bar").getText();
+		Assert.assertEquals(site,"www.sphero.com/privacy/");
+		driver.pressKeyCode(AndroidKeyCode.BACK);
+		driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").getAttribute("checked"), "false"); 
+		clickButton("continue");
+		
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/verify_account_button")));
-		Thread.sleep(10000); //wait for email to be sent
-		//Firefox();
 		
-		Thread.sleep(30000);
+		//check oops appearance
 		driver.findElementById("com.sphero.sprk:id/verify_account_button").click();
-		checkToolBarTitle("Build");
-		dismissHint();
-		signOut();
-		//do automated gmail account verification
+		driver.findElementById("com.sphero.sprk:id/verification_failed");
 		
-		//com.sphero.sprk:id/verify_account_button
-		//com.sphero.sprk:id/do_this_later_button
+		Thread.sleep(5000); //wait for email to be sent
+		
+		Firefox();
+		
+		//waiting for firefox to be closed
+		while(signedUp==false){
+			Thread.sleep(2000);
+		}
+		driver.findElementById("com.sphero.sprk:id/verify_account_button").click();
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/sign_out_button")));
+		System.out.println("Student account created successfully");
+		signOut();
+		signedUp = false;
 	}
 	@Parameters({"instructor_username","instructor_email","password"})
 	@Test
 	public void signUpInstructor(String instructor_username,String instructor_email,String password) throws Exception{
-		clickMenu();
-		clickPocketNavSignIn();
-		driver.findElementById("com.sphero.sprk:id/sign_up_button").click();
+		if(signedIn==true){
+			signOut();
+		}
+		clickNavBar("home");
+		clickTab("profile");
+		
+		clickButton("sign in");
+		clickButton("sign up");
+		
 		driver.findElementById("com.sphero.sprk:id/select_instructor").click();
 		driver.findElementById("com.sphero.sprk:id/reenter_password_et").click();
 		driver.findElementById("com.sphero.sprk:id/reenter_password_et").sendKeys(password);
@@ -378,87 +424,51 @@ public class Testscript extends androidInterface{
 		driver.pressKeyCode(AndroidKeyCode.BACK);
 		Thread.sleep(2000); //sign up button to shift
 		driver.findElementById("com.sphero.sprk:id/continue_signup_button").click();
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/verify_account_button")));
-		Thread.sleep(10000); //wait for email to be sent
-		//Firefox();
 		
-		Thread.sleep(30000);
-		driver.findElementById("com.sphero.sprk:id/verify_account_button").click();
-		checkToolBarTitle("Build");
-		dismissHint();
-		signOut();
-		
-	
-	}
-
-	@Test //open a sample program and copy
-	public void copySampleProgram() throws Exception{
-		testLogTitle("View and Copy a Sample Program");
-		int numOfProg = countProgram();
-		clickSampleProgramsTab();
-		clickProgram();
-		clickCopy();
-		clickButton("yes"); //confirm
-		clickButton("yes"); //ok
-		checkToolBarTitle("Build");
-		clickMyProgramsTab();
-		int numOfProgPost = countProgram();
-		Assert.assertEquals(numOfProgPost, numOfProg+1);
-		System.out.println("A copy of the sample program has been made");
-	}
-	
-	@Test //open a sample program and copy
-	public void copySampleProgramRepeatedly() throws Exception{
-		testLogTitle("View and Copy a Sample Program");
-		int numOfProg = 0;
-		
-		clickSampleProgramsTab();
-		//driver.findElementByXPath("//*[@class='android.support.v7.app.ActionBar$Tab' and @index='1']").click();
-		//driver.findElementsByXPath("//android.support.v7.app.ActionBar$Tab[@index='1']");
-		while(numOfProg<=500){
-			clickProgram();
-			clickCopy();
-			clickButton("yes"); //confirm
-			clickButton("yes"); //ok
-			System.out.println("Program # " + numOfProg +"has been made");
-			numOfProg++;
+		//newsletter screen
+		driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").getAttribute("checked"), "true"); 
+		driver.findElementById("com.sphero.sprk:id/privacy_policy_button").click();
+		try{
+			driver.findElementById("android:id/button_once").click();
 		}
+		catch(Exception e){
+			System.out.println("Just once/Always not found");
+		}
+		String site = driver.findElementById("com.android.chrome:id/url_bar").getText();
+		Assert.assertEquals(site,"www.sphero.com/privacy/");
+		driver.pressKeyCode(AndroidKeyCode.BACK);
+		driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").getAttribute("checked"), "false"); 
+		clickButton("continue");
+		
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/verify_account_button")));
+		
+		//check oops appearance
+		driver.findElementById("com.sphero.sprk:id/verify_account_button").click();
+		driver.findElementById("com.sphero.sprk:id/verification_failed");
+		
+		Thread.sleep(5000); //wait for email to be sent
+		
+		Firefox();
+		
+		//waiting for firefox to be closed
+		while(signedUp==false){
+			Thread.sleep(2000);
+		}
+		driver.findElementById("com.sphero.sprk:id/verify_account_button").click();
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/sign_out_button")));
+		System.out.println("Instructor ccount created successfully");
+		signOut();
+		signedUp = false;
+
 	}
+
 	
-	@Test
-	public void viewSampleProgram() throws Exception{
-		testLogTitle("View a Sample Program");
-		int numOfProg = countProgram();
-		//click sample programs tab
-		clickSampleProgramsTab();
-		//click the first sample program
-		clickProgram();
-		//click view
-		clickView();
-		leaveCanvas();
-		checkToolBarTitle("Build");
-		clickMyProgramsTab();
-		int numOfProgPost = countProgram();
-		Assert.assertEquals(numOfProgPost, numOfProg);
-		System.out.println("No copy is made viewing a program");
-	}
 	
 
 	
-	//Unit test for counting programs
-	public int countProgram(){
-		String xpath = "//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout";
-		List <WebElement> ListByXpath = driver.findElements(By.xpath(xpath));
-		return ListByXpath.size();   
-	}
-	
-	//@Test
-	public void countPrograms(){
-		String xpath = "//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout";
-		List <WebElement> ListByXpath = driver.findElements(By.xpath(xpath));
-		System.out.println(ListByXpath.size());
-	}
-	
+
 	
 	public void scrollVertical(String s,int duration){
 
@@ -500,9 +510,6 @@ public class Testscript extends androidInterface{
 		
 		//signIn("s2","yyyyyy","valid",false,false);
 		
-		checkToolBarTitle("Build");
-
-		dismissHint();
 		
 		int posFirst;
 		int posNext;
@@ -574,8 +581,6 @@ public void scrollToBottom() throws Exception{
 		
 		checkToolBarTitle("Build");
 
-		dismissHint();
-		
 		
 		int scrollCount = 0;
 		while(true){
@@ -609,6 +614,7 @@ public void scrollToBottom() throws Exception{
 	
 
 	
+
 	
 	
 	
@@ -751,6 +757,28 @@ public void scrollToBottom() throws Exception{
 		wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//android.view.View[@resource-id='com.sphero.sprk:id/swipe_refresh']/android.widget.ImageView")));
 		System.out.println("Refresh icon not visible, at top");
 	}
+	
+	public void leaveCanvas() throws Exception{
+		int attempt = 0 ;
+		while (!(driver.currentActivity()).toLowerCase().contains("unity")){
+			System.out.println("Canvas loading...");
+			Thread.sleep(500);
+		}
+		String s = driver.currentActivity();
+		while ((driver.currentActivity()).toLowerCase().contains("unity")){
+			System.out.println("In Canvas");
+			driver.pressKeyCode(AndroidKeyCode.BACK);
+			Thread.sleep(1500);
+			attempt++;
+			if(attempt>10){
+				Assert.fail("Could not leave canvas");
+				break;
+			}
+		}
+		Assert.assertNotEquals(s, driver.currentActivity());
+		System.out.println("Left Canvas");
+	}
+	
 
 
 	
@@ -767,42 +795,67 @@ public void scrollToBottom() throws Exception{
 	}
 	
 	
-	
-/*
-	@Test
 	public void Firefox(){
+		
+		System.out.println("Launching Firefox to activate account through email");
+		
+		web = new FirefoxDriver();
+		web.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		
 		WebDriverWait waitWeb = new WebDriverWait(web,30);
 		web.get("https://www.gmail.com"); 
 		
 		// Store the current window handle
-		String winHandleBefore = driver.getWindowHandle();
+		String winHandleBefore = web.getWindowHandle();
+		System.out.println(winHandleBefore);
 		
 		web.findElementByXPath(".//*[@id='Email']").sendKeys("ffsqatsignup@gmail.com");
 		web.findElementByXPath(".//*[@id='next']").click();
 		web.findElementByXPath(".//*[@id='Passwd']").sendKeys("middlefinger");
 		web.findElementByXPath(".//*[@id='signIn']").click();
-		waitWeb.until(ExpectedConditions.urlContains("https://mail.google.com/mail/#inbox"));
-		//web.findElementByXPath("//*[contains(text(), 'Activate your SPRK Lightning Lab Account!')]").click();
-		
-		//web.findElementByXPath(".//span[text()='Activate your SPRK Lightning Lab Account!']").click();
-		web.findElementByXPath("//*[text()='Activate your SPRK Lightning Lab Account!']").click();
+		waitWeb.until(ExpectedConditions.urlContains("#inbox"));
+
+		//click on email
+		web.findElementByCssSelector("td[tabindex='-1']").click();
+		//click activate
 		web.findElementByXPath("//a[text()='Activate Account']").click();
 		
-	
 		// Switch to new window opened
 		for(String winHandle : web.getWindowHandles()){
 		    web.switchTo().window(winHandle);
+		    System.out.println(winHandle);
 		}
+		
+		waitWeb.until(ExpectedConditions.urlContains("sphero"));
 
 		// Close the new window, if that window no more required
 		web.close();
+		
+		System.out.println("Account activated");
 
 		// Switch back to original browser (first window)
-		driver.switchTo().window(winHandleBefore);
+		web.switchTo().window(winHandleBefore);
+		System.out.println(winHandleBefore);
 		
-		web.findElementByXPath("//*[aria-label='Delete']").click();
+		//keyboard shortcut # to delete
+		Actions action = new Actions(web); 
+		//delete activate email
+		action.sendKeys(String.valueOf('\u0023')).perform();
+				
+		//return to inbox
+		waitWeb.until(ExpectedConditions.urlContains("#inbox"));
+		
+		//delete welcome
+		web.findElementByCssSelector("td[tabindex='-1']").click();
+		action.sendKeys(String.valueOf('\u0023')).perform();
+		web.quit();
+		
+		System.out.println("Deleted emails, closing firefox");
+		
+		signedUp = true;
+		
 	}
-*/
+
 	
 	
 

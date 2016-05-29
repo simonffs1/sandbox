@@ -32,8 +32,6 @@ public class communityActivities extends Testscript{
 		clickMenu();
 		clickMenuItem("explore");
 	
-		dismissHint();
-		
 		if(section.toLowerCase().equals("media")){
 			clickMediaTab();
 		}
@@ -88,7 +86,6 @@ public class communityActivities extends Testscript{
 		
 		clickMenu();
 		clickMenuItem("explore");
-		dismissHint();
 		
 		clickMediaTab();
 		clickAddMedia();

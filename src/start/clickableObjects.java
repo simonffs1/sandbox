@@ -21,10 +21,6 @@ public interface clickableObjects {
 	void clickProgram();
 	void clickCopy();
 	void clickView();
-	void leaveCanvas();
-	void dismissHint();
-	void dismissNewsletter(Boolean trigger);
-
 	
 	//Explore 
 	void clickExploreTab();

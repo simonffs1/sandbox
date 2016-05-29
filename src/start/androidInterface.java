@@ -2,6 +2,7 @@ package start;
 
 import java.util.List;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -123,8 +124,11 @@ public class androidInterface implements clickableObjects {
 		//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/button_content")));
 		s = s.toLowerCase();
 		
+		String[] positive = {"yes", "ok","okay", "equals","positive","save","delete"};
+		ArrayUtils.contains(positive,s);
+
 		//Yes
-		if(s.equals("yes") || s.equals("ok") || s.equals("okay") || s.equals("positive")){
+		if(ArrayUtils.contains(positive,s)){
 			driver.findElementById("com.sphero.sprk:id/positive_action").click();
 		}
 		//No
@@ -133,14 +137,31 @@ public class androidInterface implements clickableObjects {
 		}
 		//Sign in
 		else if(s.equals("sign in") || s.equals("signin")){
-			driver.findElementById("com.sphero.sprk:id/sign_in_button").click();
+			
+			if(driver.findElementsByXPath("//*[@resource-id='com.sphero.sprk:id/fragment_container']//*[@resource-id='com.sphero.sprk:id/sign_in_button']").size()==0){
+				driver.findElementById("com.sphero.sprk:id/sign_in_button").click();
+			}
+			else{
+				driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/fragment_container']//*[@resource-id='com.sphero.sprk:id/sign_in_button']").click();
+			}
 		}
 		//Sign out
 		else if(s.equals("sign out") || s.equals("signout")){
 			driver.findElementById("com.sphero.sprk:id/sign_out_button").click();
 		}
+		else if(s.equals("sign up") || s.equals("signup")){
+			driver.findElementById("com.sphero.sprk:id/sign_up_button").click();
+		}
 		else if(s.equals("back") || s.equals("close") || s.equals("x")){
+			if(driver.findElementsById("com.sphero.sprk:id/nav_button").size()==0){
+				driver.findElementById("com.sphero.sprk:id/dialog_close").click();
+			}
+			else{
 			driver.findElementById("com.sphero.sprk:id/nav_button").click();
+			}
+		}
+		else if(s.equals("continue")){
+			driver.findElementById("com.sphero.sprk:id/continue_button").click();
 		}
 		
 		System.out.println("Clicked " + s + " button");
@@ -205,21 +226,6 @@ public class androidInterface implements clickableObjects {
 	public void closeSignIn(){
 		
 	}
-	public void leaveCanvas(){
-		int attempt =0 ;
-		String s = driver.currentActivity();
-		while ((driver.currentActivity()).toLowerCase().contains("unity")){
-			System.out.println("IN Canvas");
-			driver.pressKeyCode(AndroidKeyCode.BACK);
-			attempt++;
-			if(attempt>10){
-				Assert.fail("Could not leave canvas");
-				break;
-			}
-		}
-		Assert.assertNotEquals(s, driver.currentActivity());
-		System.out.println("Left Canvas");
-	}
 	public void clickSphero(){
 		driver.findElementById("com.sphero.sprk:id/choose_sphero").click();
 	}
@@ -230,41 +236,7 @@ public class androidInterface implements clickableObjects {
 		driver.findElementById("com.sphero.sprk:id/choose_bb8").click();
 	}
 	
-	public void dismissHint(){
-		try{
-			if(driver.findElement(By.id("com.sphero.sprk:id/notification_title")).isDisplayed() == true ){
-			driver.findElementById("com.sphero.sprk:id/notification_close").click();
-			System.out.println("Hint view exists, clicked X");
-			}
-		}
-		catch(Exception e){
-			System.out.println("Hint view does not exist, skipping dismissal");
-		}
-	}
-	
-	public void dismissNewsletter(Boolean trigger){
-		try{
-			if(driver.findElement(By.id("com.sphero.sprk:id/subscribe_button")).isDisplayed() == true ){
-			
-				if(trigger==true){
-					//Dismiss
-					driver.findElementById("com.sphero.sprk:id/skip_button").click();
-					System.out.println("Newsletter found, clicked X");
-				}
-				else{
-					//Sign up
-					driver.findElementById("com.sphero.sprk:id/age_confirmation_checkbox").click();
-					driver.findElementById("com.sphero.sprk:id/email").sendKeys("simon@fingerfoodstudios.com");
-					driver.pressKeyCode(AndroidKeyCode.BACK);
-					driver.findElementById("com.sphero.sprk:id/subscribe_button").click();
-					driver.findElementById("com.sphero.sprk:id/buttonDefaultPositive").click();
-				}
-			}
-		}
-		catch(Exception e){
-			System.out.println("Newsletter not found, skipping dismissal");
-		}
-	}
+
 	//Explore
 	public void clickExploreTab(){
 		driver.findElementByXPath("//*[@class='android.support.v7.a.d' and @index='0']").click();
