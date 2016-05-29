@@ -6,7 +6,7 @@
   	<classes>
   	    <class name="start.Testscript">
   	        <methods>
-  	            <include name="SortBy"/>
+  	            <include name="Settings"/>
   	        </methods>
   	    </class>
   	</classes>

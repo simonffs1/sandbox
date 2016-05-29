@@ -4,10 +4,7 @@ public interface clickableObjects {
 	
 
 	//Global
-	void clickMenu();
-	void clickMenuItem(String s);
-	void clickOk();
-	void clickNo();
+	void clickButton(String s);
 	void sendKeys(String s);
 	
 	//Build

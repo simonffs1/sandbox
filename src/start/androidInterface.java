@@ -31,7 +31,7 @@ public class androidInterface implements clickableObjects {
 		//click on the nav bar item
 		allNavBar = driver.findElements(By.id("com.sphero.sprk:id/bottom_navigation_small_container"));
 	
-		if (item.toLowerCase().equals("account")){
+		if (item.toLowerCase().equals("home")){
 			allNavBar.get(0).click();
 			
 			}
@@ -56,30 +56,35 @@ public class androidInterface implements clickableObjects {
 		
 		//verify expected tabs
 		if(item.toLowerCase().equals("account")){
-		allTabs.get(0).getText().toLowerCase().equals("dashboard");
-		allTabs.get(1).getText().toLowerCase().equals("profile");
-		allTabs.get(2).getText().toLowerCase().equals("settings");
+			allTabs.get(0).getText().toLowerCase().equals("feed");
+			allTabs.get(1).getText().toLowerCase().equals("profile");
+			allTabs.get(2).getText().toLowerCase().equals("settings");
 		}
 		else if(item.toLowerCase().equals("programs")){
-		allTabs.get(0).getText().toLowerCase().equals("my programs");
-		allTabs.get(1).getText().toLowerCase().equals("sphero");
-		allTabs.get(2).getText().toLowerCase().equals("community");
+			allTabs.get(0).getText().toLowerCase().equals("my programs");
+			allTabs.get(1).getText().toLowerCase().equals("sphero");
+			allTabs.get(2).getText().toLowerCase().equals("community");
 		}
 		else if(item.toLowerCase().equals("activities")){
-		allTabs.get(0).getText().toLowerCase().equals("my activities");
-		allTabs.get(1).getText().toLowerCase().equals("sphero");
-		allTabs.get(2).getText().toLowerCase().equals("community");
-		allTabs.get(3).getText().toLowerCase().equals("innovators");
+			allTabs.get(0).getText().toLowerCase().equals("my activities");
+			allTabs.get(1).getText().toLowerCase().equals("sphero");
+			allTabs.get(2).getText().toLowerCase().equals("community");
+			//allTabs.get(3).getText().toLowerCase().equals("innovators");
 		}
 	}
 	
 	public void clickTab(String s){
+		s = s.toLowerCase();
 		List <WebElement> tabs = driver.findElements(By.xpath("//android.support.v7.a.d/android.widget.TextView"));
 		for(WebElement temp:tabs){
-			if (temp.getText().equals(s.toLowerCase())){
+			if (temp.getText().toLowerCase().equals(s)){
 				temp.click();
+				System.out.println("Clicked " + s);
+				Assert.assertEquals(temp.isSelected(), true);
+				break;
 			}
 		}
+		
 	}
 	
 	public void clickMenu(){
@@ -90,9 +95,10 @@ public class androidInterface implements clickableObjects {
 		allTextView = driver.findElements(By.id("com.sphero.sprk:id/menu_item_text")); 
 	}
 	public void clickMenuItem(String s){
+		s = s.toLowerCase();
 		for (WebElement temp : allTextView) {
-			//System.out.println(temp.getText());
-			if(temp.getText().toLowerCase().equals(s.toLowerCase())){
+			System.out.println(temp.getText());
+			if(temp.getText().toLowerCase().equals(s)){
 				temp.click();
 				System.out.println("Clicked " + s);
 				break;
@@ -112,22 +118,35 @@ public class androidInterface implements clickableObjects {
 		}
 	}
 	
-	public void clickOk(){
+	public void clickButton(String s){
 		//Find dialog
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("android:id/content")));
-		//Click No
-		driver.findElementById("com.sphero.sprk:id/buttonDefaultPositive").click();
-		System.out.println("Clicked Yes/Ok");
+		//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/button_content")));
+		s = s.toLowerCase();
+		
+		//Yes
+		if(s.equals("yes") || s.equals("ok") || s.equals("okay") || s.equals("positive")){
+			driver.findElementById("com.sphero.sprk:id/positive_action").click();
+		}
+		//No
+		else if(s.equals("no") || s.equals("cancel")  || s.equals("negative")){
+			driver.findElementById("com.sphero.sprk:id/negative_action").click();
+		}
+		//Sign in
+		else if(s.equals("sign in") || s.equals("signin")){
+			driver.findElementById("com.sphero.sprk:id/sign_in_button").click();
+		}
+		//Sign out
+		else if(s.equals("sign out") || s.equals("signout")){
+			driver.findElementById("com.sphero.sprk:id/sign_out_button").click();
+		}
+		else if(s.equals("back") || s.equals("close") || s.equals("x")){
+			driver.findElementById("com.sphero.sprk:id/nav_button").click();
+		}
+		
+		System.out.println("Clicked " + s + " button");
+		
 	}
-	public void clickNo(){
-		//Find dialog
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("android:id/content")));
-		//Click No
-		driver.findElementById("com.sphero.sprk:id/buttonDefaultNegative").click();
-		System.out.println("Clicked No/Cancel");
-		//Wait for dialog to disappear
-		//wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/content")));
-	}
+	
 	public void sendKeys(String s){
 		driver.findElementById("com.sphero.sprk:id/edit_text").sendKeys(s);
 	}

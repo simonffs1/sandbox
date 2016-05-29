@@ -47,7 +47,7 @@ public class Testscript extends androidInterface{
 	WebDriverWait waitLong;
 	Boolean uploadSuccess;
 	Boolean signedIn;
-	FirefoxDriver web;
+	//FirefoxDriver web;
 	private SoftAssert softAssert = new SoftAssert();
 	
 	//device screen
@@ -62,7 +62,7 @@ public class Testscript extends androidInterface{
 	public void setup(String port) throws MalformedURLException, InterruptedException {
 		
 		File appDir = new File("src");
-		File app = new File(appDir, "ll-1.4.2.147-staging.apk");
+		File app = new File(appDir, "ll-1.5.0.166-staging.apk");
 		
 		//appium specific configuration
 		DesiredCapabilities cap = new DesiredCapabilities();
@@ -77,17 +77,46 @@ public class Testscript extends androidInterface{
 		waitShort = new WebDriverWait(driver,10);
 		waitLong = new WebDriverWait(driver,240);
 		touch = new TouchAction(driver);
-		web = new FirefoxDriver();
-		web.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		//web = new FirefoxDriver();
+		//web.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		uploadSuccess = true;
 		signedIn = false;
 		
 		screenHeight = driver.manage().window().getSize().getHeight();
 		screenWidth = driver.manage().window().getSize().getWidth();
 		
-		//remove this for bluetooth dialog at splash screen
+		try{
+			driver.findElementById("com.sphero.sprk:id/negative_action").click();
+		}
+		catch(Exception e){
+			System.out.println("Bluetooth dialog did not appearo on splash");
+		}
 		
+		//check landing page is home - feed
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/bottom_nav")));
 		
+		//Verify starting screen is Home
+		String selectedNavBar = driver.findElementById("com.sphero.sprk:id/bottom_navigation_small_item_title").getText();
+		Assert.assertEquals(selectedNavBar, "Home");
+		//Verify selected tab is Feed
+		Boolean selectedTab = driver.findElementByXPath("//android.support.v7.a.d[@index='0']/android.widget.TextView[@text='Feed']").isSelected();
+		Assert.assertTrue(selectedTab);
+		
+		System.out.println(driver.currentActivity());
+		
+		//sign out if signed in
+		if(driver.findElements(By.id("com.sphero.sprk:id/sign_in_button")).size()==0){
+			System.out.println("Sign in button not found, signed in");
+			//Sign out process
+			clickTab("Profile");
+			clickButton("Sign out");
+			clickButton("positive");
+			wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("android:id/progress")));
+			driver.findElements(By.id("com.sphero.sprk:id/sign_in_button"));
+			driver.findElements(By.id("com.sphero.sprk:id/sign_in_text"));
+			clickTab("Feed");
+		}
+	
 	}
 	
 	@BeforeMethod
@@ -106,216 +135,71 @@ public class Testscript extends androidInterface{
 		
 		//back out of edit screen 
 		if(uploadSuccess==false){
-			System.out.println("Uploading failed, backing out to Build");
-			driver.pressKeyCode(AndroidKeyCode.BACK);
-			clickOk(); //discard change confirm
-			//press back button if in explore
-			//if(driver.findElementById("com.sphero.sprk:id/toolbar_title").getText().equals("Explore")){
-			//	driver.pressKeyCode(AndroidKeyCode.BACK);
-			//}
+			System.out.println("Uploading failed, backing out to nav bar");
+			while(driver.findElements(By.id("com.sphero.sprk:id/bottom_nav")).size()==0){
+				driver.pressKeyCode(AndroidKeyCode.BACK);
+				Thread.sleep(1500);
+				try{
+					clickButton("yes");
+				}
+				catch(Exception e){
+					System.out.println("No dialog was found blocking exit");
+				}
+			}
 		}
 		
 		uploadSuccess = true; //reset back to original state
-		//Wait if on splash screen
 		
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/bottom_navigation_small_item_title")));
-		/*
-		String currentScreen = driver.currentActivity().toLowerCase();
-		while(currentScreen.contains("splash")){
-			System.out.println("On splash screen");
-			Thread.sleep(5000);
-			currentScreen = driver.currentActivity().toLowerCase();
-		}
-		*/
+		driver.findElementById("com.sphero.sprk:id/bottom_nav");
 		
 	}
 	
-	@Test
-	public void SortBy(){
-		clickNavBar("programs");
-		driver.findElementById("com.sphero.sprk:id/spinner_text").click();
-		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/spinner_text' and @text='Date Oldest']").click();
-	}
 	
-	public void enablebluetoothDialog(){
-		testLogTitle("Bluetooth dialog enable ");
-		try{
-			//wait for bluetooth dialog
-			wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/title")));
-			driver.findElementByName("Bluetooth Not Enabled");
-			//enable bluetooth
-			driver.findElementById("com.sphero.sprk:id/buttonDefaultPositive").click();
-		}
-		catch(Exception e){
-			//bluetooth dialog did not appear
-			System.out.println("Bluetooth dialog did not appear");
-		}
-	}
-	
-	
-	@Test 
-	public void connectRobot() throws Exception{
-		testLogTitle("Connect BB-8");
-		
-		WebDriverWait waitFirmware = new WebDriverWait(driver,120);
-		clickMenu();
-		try{
-			driver.findElementById("com.sphero.sprk:id/header");
-			System.out.println("Robot already connected");
-		}
-		catch(Exception e){
-		System.out.println("Robot not connected");
-		//Click Connect a Robot
-		clickConnectRobot();
-		//Click Sphero
-		try{
-			chooseSphero();
-		}
-		catch(Exception f){
-			Assert.fail("Missing elements in Connect Sphero");
-		}
-		clickClose();
-		//Click Ollie
-		
-		try{
-			chooseOllie();
-		}
-		catch(Exception g){
-			Assert.fail("Missing elements in Connect Ollie");
-		}
-		clickClose();
-		//Click BB-8
-		try{
-			chooseBB8();
-		}
-		catch(Exception h){
-			Assert.fail("Missing elements in Connect BB-8");
-		}
-		
-		waitFirmware.until(ExpectedConditions.invisibilityOfElementWithText(By.id("com.sphero.sprk:id/dialog_title"), "Connect BB-8"));
-		clickMenu();
-		
-		driver.findElementById("com.sphero.sprk:id/header");
-		System.out.println("Robot is connected");
-		//Close pocket nav
-		driver.pressKeyCode(AndroidKeyCode.BACK);
-		}
-	}
-	
-	@Test(dependsOnMethods={"connectRobot"})
-	public void renameRobot(){
-		testLogTitle("Rename Robot");
-		
-		clickMenu();
-		String originalName = driver.findElementById("com.sphero.sprk:id/robot_name").getText();
-		driver.findElementById("com.sphero.sprk:id/edit_robot_name").click();
-		driver.findElementById("com.sphero.sprk:id/edit_text").clear();
-		driver.findElementById("com.sphero.sprk:id/edit_text").sendKeys("Auto!");
-		driver.findElementById("com.sphero.sprk:id/buttonDefaultPositive").click();
-		String newName = driver.findElementById("com.sphero.sprk:id/robot_name").getText();
-		Assert.assertNotEquals(newName, originalName);
-		System.out.println("Robot name changed");
-		driver.pressKeyCode(AndroidKeyCode.BACK);
-	}
-	
-	@Test //(dependsOnMethods={"connectRobot"},groups="connection")
-	public void firmwareUpdate() throws Exception{
-		testLogTitle("Firmware update");
-		
-		WebDriverWait waitFirmware = new WebDriverWait(driver,120);
-		//Go to Settings
-		driver.findElementByXPath("//*[@class='android.widget.ImageButton' and @index='0']").click();
-		driver.findElementById("com.sphero.sprk:id/settings").click();
-		String screen = driver.findElementById("com.sphero.sprk:id/toolbar_title").getText();;
-		Assert.assertEquals(screen,"Settings");
-		//Verified on Settings screen
-		driver.findElementById("com.sphero.sprk:id/firmware_update_button").click();
-		driver.findElementById("com.sphero.sprk:id/buttonDefaultPositive").click();
-		
-		System.out.println("Settings found, initiating firmware update");
-		
-		while(!driver.findElementById("com.sphero.sprk:id/toolbar_title").getText().equals("Build")){
-			Thread.sleep(500);
-			driver.pressKeyCode(AndroidKeyCode.BACK);
-		}
-		
-		System.out.println("Firmware complete");
-		/*		Thread.sleep(50000); //wait 40 seconds
-		
-		waitFirmware.until(ExpectedConditions.visibilityOfElementLocated(By.id("com.sphero.sprk:id/toolbar_title")));
-		screen = driver.findElementById("com.sphero.sprk:id/toolbar_title").getText();;
-		Assert.assertEquals(screen,"Settings");
-		System.out.println("Returned back to settings, firmware update complete");
-		Thread.sleep(2000);
-		driver.pressKeyCode(AndroidKeyCode.BACK); //return to build*/
-		
-		
-	}
-	
-	@Test (dependsOnMethods={"firmwareUpdate"})
-	public void disconnectRobot() throws Exception{
-		testLogTitle("Disconnect BB-8");
-		
-		clickMenu();
-
-		try{
-			//Click Connect a Robot
-			driver.findElementById("com.sphero.sprk:id/header").click();
-			System.out.println("Robot is connected");
-			//Disconnect by tapping Sphero
-			chooseSphero();
-			driver.findElementById("com.sphero.sprk:id/dialog_close").click();
-			driver.findElementById("com.sphero.sprk:id/dialog_close").click();
-			//Open pocketnav
-			Thread.sleep(5000);
-			clickMenu();
-			driver.findElementById("com.sphero.sprk:id/header_not_connected");
-			System.out.println("Robot is disconnected");
-		}
-		catch(Exception e){
-			System.out.println("Robot already disconnected");
-		}
-		//Close pocketnav
-		driver.pressKeyCode(AndroidKeyCode.BACK);
-	}
 	
 	@DataProvider(name = "signInInfo")
     public Object[][] dataProviderMethod1() {
+		//String username,String password, String type, Boolean valid, Boolean Clever, Boolean signOut
         return new Object[][] { 
-            {"s4","1","valid",false,false}, 
-            //{"ffsqat@gmail.com","1asdf","invalid",false,true}, 
-            //{"307201","307201","valid",true,true}, 
-            //{"307201","307201342","invalid",true,true}
+            {"ffsqat+s4@gmail.com","yyyyyy","student",true,false,true}, 
+            {"ffsqat@gmail.com","1asdf","instructor",false,false,true}, 
+            {"307201","307201","student",true,true,true}, 
+            {"307201","307201342","student",false,true,true}
             };
     }
     
-    @Test(dataProvider = "signInInfo")
-    public void signIn(String username,String password, String type, Boolean Clever, Boolean signOut){
+    @Test(dataProvider = "signInInfo",invocationCount=10)
+    public void signIn(String username,String password, String type, Boolean valid, Boolean Clever, Boolean signOut){
         testLogTitle("Sign in");
-        System.out.println("Signing in with username:" + username +"| password:" + password);
-        System.out.println("Expected result:" + type);
-        if(Clever==true){
-            System.out.println("Clever sign in");
+        System.out.println("Signing in with username:" + username + "| password:" + password);
+        System.out.println("Account type:" + type +" | Clever:" + Clever);
+        System.out.println("Valid credentials: " + valid);
+        System.out.println("Sign out after : " + signOut);
+        
+        //check account type before running
+        if("instructor"!=type.intern() && "student"!=type.intern()){
+            Assert.fail("Wrong expected account types, test case not run");
         }
         
-        //check type before running
-        if("valid"!= type.intern() && "invalid"!=type.intern()){
-            Assert.fail("Wrong type was chosen, test case not run");
-        }
-        //Menu button
-        clickMenu();
-        //Sign in button
-        clickPocketNavSignIn();
-        clickSignIn(false);
+        clickNavBar("Home");
+        clickTab("Profile");
+        clickButton("Sign in");
+        //Click the sign in button within the get started fragment
+        driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/fragment_container']//*[@resource-id='com.sphero.sprk:id/sign_in_button']").click();
+        System.out.println("Clicked Sign in button on Get Started");
+        
         //Regular sign in
         if(Clever==false){
         	driver.findElementById("com.sphero.sprk:id/username_et").click();
             driver.findElementById("com.sphero.sprk:id/username_et").sendKeys(username);
+            System.out.println("Entered username");
             driver.hideKeyboard();
             driver.findElementById("com.sphero.sprk:id/password_et").click();
             driver.findElementById("com.sphero.sprk:id/password_et").sendKeys(password);
+            System.out.println("Entered password");
             driver.hideKeyboard();
-            clickSignIn(true);
+            driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/fragment_container']//*[@resource-id='com.sphero.sprk:id/sign_in_button']").click();
+            System.out.println("Clicked Sign In button on Sign In");
+            
         }
         //Clever sign in
         else{
@@ -325,97 +209,187 @@ public class Testscript extends androidInterface{
             for(WebElement i : fields){
                 if(i.getAttribute("name").equals("Username")){
                     i.sendKeys(username);
+                    System.out.println("Entered username");
                 }
                 if(i.getAttribute("name").equals("Password")){
                     i.sendKeys(password);
+                    System.out.println("Entered password");
                 }
             }
             driver.hideKeyboard();
-            driver.findElementByClassName("android.widget.Button").click();
-            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/nav_close")));
+            driver.findElementByXPath("//android.webkit.WebView//android.widget.Button").click(); //login to clever button
+            System.out.println("Clicked Sign in with clever button");
+           // wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/nav_close")));
         }
+        
         //Expected conditions for valid sign in
-        if(type.toLowerCase().equals("valid")){
-            checkToolBarTitle("Build");
-            dismissHint();
+        if(valid == true){
+        	wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("android:id/progress")));
+        	driver.findElementById("com.sphero.sprk:id/contact_card");
+        	driver.findElementById("com.sphero.sprk:id/edit_profile_button");
+        	driver.findElementById("com.sphero.sprk:id/profile_text_field");
+        	driver.findElementById("com.sphero.sprk:id/sign_out_button");
+        	
+        	//check for email id for instructor
+        	if(type.toLowerCase().equals("instructor")){
+        		driver.findElementById("com.sphero.sprk:id/email");
+        	}
+        	//check for grade for student
+        	else{
+        		driver.findElementById("com.sphero.sprk:id/grade_container");
+        	}
+        	
+        	System.out.println("Sign in success");
             signedIn=true;
         }
-        else if(type.toLowerCase().equals("invalid") && Clever==false){
-            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("android:id/progress")));
-            clickOk(); //close invalid credentials dialog
-            clickCloseSignIn(); //close sign in
-            clickCloseSignIn(); //close get started
+        else if(valid == false && Clever==false){
+        	wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("android:id/progress")));
+            clickButton("ok"); //close invalid credentials dialog
+            clickButton("back"); //close sign in
+            clickButton("x"); //close get started
 
         }
-        else if(type.toLowerCase().equals("invalid") && Clever==true){
-            clickCloseSignIn(); //close clever
-            clickCloseSignIn(); //close sign in
-            clickCloseSignIn(); //close get started
+        else if(valid == false  && Clever==true){
+        	clickButton("back"); //close clever
+        	clickButton("back"); //close sign in
+        	clickButton("x"); //close get started
         }
-        clickMenu();
-        //check pocketnav changes
-        if(type.equals("valid")){
-            driver.findElementById("com.sphero.sprk:id/profile_header_signed_in");
-            System.out.println("Signed in confirmed");
-        }
-        else{
-            driver.findElementById("com.sphero.sprk:id/profile_header_not_signed_in");
-            System.out.println("Not signed in confirmed");
-        }
-        //close pocketnav
-        driver.pressKeyCode(AndroidKeyCode.BACK);
         
         if(signOut==true){
-            signOutNoDelete();
+        	if(valid==true){
+        		signOut();
+        	}
         }
-        signedIn = true;
+        
     }
+	
+	@Test
+	public void signOutDelete(){
+		
+		testLogTitle("Delete programs and Sign Out");
+		
+		//Delete all programs before signing out
+		
+		//deleteAllPrograms();
+		
+		signOut();
+		
+		signedIn=false;
+	}
 	
 	@Test
 	public void signOut(){
 		
-		testLogTitle("Sign Out (Delete all programs)");
+		testLogTitle("Sign Out");
 		
-		//Delete all programs before signing out
-		deleteAllPrograms();
-		
-		clickMenu();	
-		clickProfile();
-		clickSignOut();
-		clickOk();
+		clickNavBar("home");
+		clickTab("Profile");
+		clickButton("Sign out");
+		clickButton("positive");
 		wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("android:id/progress")));
-		dismissHint();
-		clickMenu();
-		driver.findElementById("com.sphero.sprk:id/profile_header_not_signed_in");
-		System.out.println("Signed out confirmed");
+		driver.findElements(By.id("com.sphero.sprk:id/sign_in_button"));
+		driver.findElements(By.id("com.sphero.sprk:id/sign_in_text"));
+		
+		System.out.println("Sign out success");
 		signedIn=false;
-		driver.pressKeyCode(AndroidKeyCode.BACK);
 	}
 	
 	@Test
-	public void signOutNoDelete(){
-		
-		testLogTitle("Sign Out");
-		
+	public void signUp12YearsUnder(){
 		clickMenu();
-		try{
-			clickProfile();
-			clickSignOut();
-			clickOk();
-			wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("android:id/progress")));
-			dismissHint();
-			clickMenu();
-			driver.findElementById("com.sphero.sprk:id/profile_header_not_signed_in");
-			System.out.println("Signed out confirmed");
-			signedIn=false;
-			driver.pressKeyCode(AndroidKeyCode.BACK);
-		}
-		catch(Exception e){
-			System.out.println("Already signed out");
-			driver.pressKeyCode(AndroidKeyCode.BACK);
-		}
+		clickPocketNavSignIn();
+		driver.findElementById("com.sphero.sprk:id/sign_up_button").click();
+		driver.findElementById("com.sphero.sprk:id/select_student").click();
+		driver.findElementById("com.sphero.sprk:id/continue_button").click();
+		driver.findElementById("com.sphero.sprk:id/initials_et").sendKeys("abc");
+		//driver.hideKeyboard();
+		driver.findElementById("com.sphero.sprk:id/guardian_email_et").sendKeys("asd23fk31efvm@sadlkfjkasdfjesac.com");
+		driver.hideKeyboard();
+		driver.findElementById("com.sphero.sprk:id/request_access_button").click();
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/continue_button")));
+		driver.findElementById("com.sphero.sprk:id/continue_button").click();
+		checkToolBarTitle("Build");
 	}
 	
+	@Parameters({"student_username","student_email","password"})
+	@Test
+	public void signUp13Years(String student_username,String student_email,String password) throws Exception{
+		clickMenu();
+		clickPocketNavSignIn();
+		driver.findElementById("com.sphero.sprk:id/sign_up_button").click();
+		driver.findElementById("com.sphero.sprk:id/select_student").click();
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("android:id/pickers")));
+		driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").click();
+		driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").clear();
+		driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").sendKeys("2000");
+		
+		
+		driver.findElementByXPath("//android.widget.NumberPicker[@index='0']/android.widget.EditText").clear();
+		driver.findElementByXPath("//android.widget.NumberPicker[@index='0']/android.widget.EditText").sendKeys("A");
+		
+		//driver.findElementByXPath("//android.widget.NumberPicker[@index='1']/android.widget.EditText").clear();
+		//driver.findElementByXPath("//android.widget.NumberPicker[@index='1']/android.widget.EditText").sendKeys("11");
+		
+		
+		driver.hideKeyboard();
+		driver.findElementById("com.sphero.sprk:id/continue_button").click();
+		
+		driver.findElementById("com.sphero.sprk:id/class_name_helper").click();
+		driver.findElementById("com.sphero.sprk:id/buttonDefaultNeutral").click();
+		//driver.findElementById("com.sphero.sprk:id/class_name_et").clear();
+		//driver.findElementById("com.sphero.sprk:id/class_name_et").sendKeys("classname");
+		driver.findElementById("com.sphero.sprk:id/reenter_password_et").sendKeys(password);
+		driver.findElementById("com.sphero.sprk:id/password_et").sendKeys(password);
+		driver.findElementById("com.sphero.sprk:id/email_et").sendKeys(student_email);
+		driver.findElementById("com.sphero.sprk:id/username_et").sendKeys(student_username);
+		driver.pressKeyCode(AndroidKeyCode.BACK);
+		Thread.sleep(2000); //sign up button to shift
+		driver.findElementById("com.sphero.sprk:id/create_account_button").click();
+		
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/verify_account_button")));
+		Thread.sleep(10000); //wait for email to be sent
+		//Firefox();
+		
+		Thread.sleep(30000);
+		driver.findElementById("com.sphero.sprk:id/verify_account_button").click();
+		checkToolBarTitle("Build");
+		dismissHint();
+		signOut();
+		//do automated gmail account verification
+		
+		//com.sphero.sprk:id/verify_account_button
+		//com.sphero.sprk:id/do_this_later_button
+	}
+	@Parameters({"instructor_username","instructor_email","password"})
+	@Test
+	public void signUpInstructor(String instructor_username,String instructor_email,String password) throws Exception{
+		clickMenu();
+		clickPocketNavSignIn();
+		driver.findElementById("com.sphero.sprk:id/sign_up_button").click();
+		driver.findElementById("com.sphero.sprk:id/select_instructor").click();
+		driver.findElementById("com.sphero.sprk:id/reenter_password_et").click();
+		driver.findElementById("com.sphero.sprk:id/reenter_password_et").sendKeys(password);
+		driver.findElementById("com.sphero.sprk:id/password_et").click();
+		driver.findElementById("com.sphero.sprk:id/password_et").sendKeys(password);
+		driver.findElementById("com.sphero.sprk:id/email_et").click();
+		driver.findElementById("com.sphero.sprk:id/email_et").sendKeys(instructor_email);
+		driver.findElementById("com.sphero.sprk:id/username_et").click();
+		driver.findElementById("com.sphero.sprk:id/username_et").sendKeys(instructor_username);
+		driver.pressKeyCode(AndroidKeyCode.BACK);
+		Thread.sleep(2000); //sign up button to shift
+		driver.findElementById("com.sphero.sprk:id/continue_signup_button").click();
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/verify_account_button")));
+		Thread.sleep(10000); //wait for email to be sent
+		//Firefox();
+		
+		Thread.sleep(30000);
+		driver.findElementById("com.sphero.sprk:id/verify_account_button").click();
+		checkToolBarTitle("Build");
+		dismissHint();
+		signOut();
+		
+	
+	}
 
 	@Test //open a sample program and copy
 	public void copySampleProgram() throws Exception{
@@ -424,8 +398,8 @@ public class Testscript extends androidInterface{
 		clickSampleProgramsTab();
 		clickProgram();
 		clickCopy();
-		clickOk(); //confirm
-		clickOk(); //ok
+		clickButton("yes"); //confirm
+		clickButton("yes"); //ok
 		checkToolBarTitle("Build");
 		clickMyProgramsTab();
 		int numOfProgPost = countProgram();
@@ -444,8 +418,8 @@ public class Testscript extends androidInterface{
 		while(numOfProg<=500){
 			clickProgram();
 			clickCopy();
-			clickOk(); //confirm
-			clickOk(); //ok
+			clickButton("yes"); //confirm
+			clickButton("yes"); //ok
 			System.out.println("Program # " + numOfProg +"has been made");
 			numOfProg++;
 		}
@@ -467,213 +441,6 @@ public class Testscript extends androidInterface{
 		int numOfProgPost = countProgram();
 		Assert.assertEquals(numOfProgPost, numOfProg);
 		System.out.println("No copy is made viewing a program");
-	}
-	
-	
-	
-	@Test
-	public void createProgram(){
-		testLogTitle("Create a program");
-		int initialprograms = countProgram();
-		System.out.println(initialprograms);
-		clickAddNewProgram();
-		sendKeys("Program created by automation!");
-		//Tap Save
-		clickOk();
-		leaveCanvas();
-		checkToolBarTitle("Build");
-		//Check if program count has increased by 1
-		int currentprograms = countProgram();
-		System.out.println(currentprograms);
-		Assert.assertEquals(currentprograms,initialprograms+1);
-		System.out.println("Program created successfully");
-		if(signedIn==true){
-			driver.findElement(By.id("com.sphero.sprk:id/uploading_spinner"));
-			System.out.println("Sync indicator found");
-		}
-	}
-	
-	@Test 
-	public void deleteMyProgramSignIn(){
-		testLogTitle("Delete Programs while signed in");
-		int numOfProg = countProgram();
-		driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
-		//Check Edit title
-		String fragmentTitle = driver.findElement(By.id("com.sphero.sprk:id/dialog_title")).getText();
-		Assert.assertEquals(fragmentTitle, "Edit");
-		driver.findElementById("com.sphero.sprk:id/delete_button").click();
-		clickOk();
-		checkToolBarTitle("Build");
-		Assert.assertEquals(countProgram(), numOfProg-1);
-		System.out.println("Program has been deleted");
-		//*check name
-	}
-	
-	@Test
-	public void deleteRenameProgramSignedOut(){
-		testLogTitle("Delete Programs while signed in");
-		int initialprograms = countProgram();
-		System.out.println(initialprograms);
-		driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
-		//Tap Rename
-		driver.findElementByXPath("//*[@class='android.widget.LinearLayout' and @index='0']").click();
-		driver.findElementById("com.sphero.sprk:id/edit_text").clear();
-		sendKeys("Program renamed by automation!");
-		clickOk();
-		driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
-		//Tap Delete and confirm
-		driver.findElementByXPath("//*[@class='android.widget.LinearLayout' and @index='1']").click();
-		clickOk();
-		System.out.println(countProgram());
-		Assert.assertEquals(countProgram(),initialprograms-1);
-		System.out.println("Program deleted successfully");
-	}
-	
-	//@Test //(dependsOnMethods={'signIn'}
-	public void deleteAllPrograms(){
-		while (countProgram()>1){
-			deleteMyProgramSignIn();
-		}
-		System.out.println("All programs deleted");
-	}
-	
-	@Test 
-	public void deleteAll(){
-		testLogTitle("Delete Programs while signed in");
-		int programCount = 0;
-		while(countProgram()>1){
-		driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
-		String fragmentTitle = driver.findElement(By.id("com.sphero.sprk:id/dialog_title")).getText();
-		Assert.assertEquals(fragmentTitle, "Edit");
-		driver.findElementById("com.sphero.sprk:id/delete_button").click();
-		clickOk();
-		checkToolBarTitle("Build");
-		programCount++;
-		//Assert.assertEquals(countProgram(), numOfProg-1);
-		}
-		System.out.println("Deleted all "+programCount+" Programs");
-	}
-	
-	@Test 
-	public void deleteAllProgramsSignedOut() throws Exception{
-		while (countProgram()>1){
-			driver.findElementById("com.sphero.sprk:id/overflow_menu").click();
-			driver.findElementByXPath("//*[@class='android.widget.LinearLayout' and @index='1']").click();
-			driver.findElementById("com.sphero.sprk:id/buttonDefaultPositive").click();
-			Thread.sleep(500);
-			System.out.println(countProgram());
-		}
-		System.out.println("All programs deleted");
-	}
-	
-	
-	@Test
-	public void editMyProgram() throws Exception{
-		
-		
-		testLogTitle("Edit My Programs while signed in");
-		
-		//Check Edit title
-		//String fragmentTitle = driver.findElement(By.id("com.sphero.sprk:id/dialog_title")).getText();
-		//Assert.assertEquals(fragmentTitle, "Edit");
-		
-		clickProgram();
-		
-		boolean wasPublic = false;
-		uploadSuccess=false;
-		driver.findElementById("com.sphero.sprk:id/edit_button").click();
-		//aattach image
-		driver.findElementById("com.sphero.sprk:id/add_media_button").click();
-		//Image button
-		driver.findElementById("com.sphero.sprk:id/buttonDefaultPositive").click();
-		//Choose picture on Nexus (may vary between devices) *use try later for various file viewers
-		try{
-			waitShort.until(ExpectedConditions.presenceOfElementLocated(By.id("com.android.documentsui:id/icon_thumb")));
-			driver.findElementById("com.android.documentsui:id/icon_thumb").click();
-		}
-		catch(Exception e){
-			System.out.println("Device is not using stock android document UI");
-			touch.tap((int)(screenWidth*0.50), (int)(screenHeight/4)).perform();
-			Thread.sleep(1500);
-			touch.tap((int)(screenWidth*0.66),screenHeight/4).perform();
-		}
-		
-		//current status
-		String currentStatus = driver.findElementById("com.sphero.sprk:id/status_text").getText();
-		//Click switch and help icon
-		driver.findElementById("com.sphero.sprk:id/program_public_switch").click(); //*Keep track of switch status later
-		String postStatus = driver.findElementById("com.sphero.sprk:id/status_text").getText();
-		if(driver.findElementById("com.sphero.sprk:id/program_public_switch").getText().equals("OFF")){
-			wasPublic = true;
-			Assert.assertEquals(postStatus, "Private");
-		}
-		else if (driver.findElementById("com.sphero.sprk:id/program_public_switch").getText().equals("ON")){
-			Assert.assertEquals(postStatus, "In Review");
-		}
-		driver.findElementById("com.sphero.sprk:id/public_program_help").click();
-		clickOk();
-		
-		//Click robots
-		driver.findElementById("com.sphero.sprk:id/choose_sphero").click();
-		driver.findElementById("com.sphero.sprk:id/choose_ollie").click();
-		driver.findElementById("com.sphero.sprk:id/choose_bb8").click();
-		
-		if(screenHeight>screenWidth){
-			scrollVertical("down",500);
-		}
-		
-		//Clear fields and type
-		driver.findElementById("com.sphero.sprk:id/title").clear();
-		driver.findElementById("com.sphero.sprk:id/title").sendKeys("Edited the program title");
-		driver.pressKeyCode(AndroidKeyCode.BACK);
-		driver.findElementById("com.sphero.sprk:id/description").clear();
-		driver.findElementById("com.sphero.sprk:id/description").sendKeys("Edited the program description");
-		driver.pressKeyCode(AndroidKeyCode.BACK);
-
-		
-		driver.findElementById("com.sphero.sprk:id/dialog_action").click();
-		//if in review tap continue
-		if(wasPublic == true){
-			clickOk();
-		}
-		
-		//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("android:id/content")));
-		//waitLong.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/content")));
-		//System.out.println("Progress bar not visible");
-		
-		
-		waitLong.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/toolbar_title")));
-		//check if able to go back to build, if not upload failed
-		if(driver.findElementsById("com.sphero.sprk:id/share_container").size()==0){
-			uploadSuccess=true;
-			System.out.println("Upload success");
-		}
-		else{
-			Assert.fail("Upload failed");
-			//softAssert.fail("Upload failed");
-			//clickClose();
-			//clickOk(); //close discard change dialog
-			System.out.println("Upload failed");
-		}
-
-		//touch.press(10,(driver.manage().window().getSize().getHeight())/2);
-		//*Add discard dialog test case here later
-		//Tap the left most middle area of the screen (TABLET ONLY)
-	}
-	
-	@Test 
-	public void copyMyProgram(){
-		testLogTitle("Copy My Programs while signed in");
-		int numOfProg = countProgram();
-		clickProgram();
-		driver.findElementById("com.sphero.sprk:id/copy_button").click();
-		clickOk(); //confirm
-		clickOk(); //ok
-		wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/dialog_title")));
-		//driver.findElementByName("Programming Tutorial");
-		Assert.assertEquals(countProgram(), numOfProg+1);
-		System.out.println("Program has been copied");
-		//*check name 
 	}
 	
 
@@ -731,7 +498,7 @@ public class Testscript extends androidInterface{
 			scrollLimit = 10;
 		}
 		
-		signIn("s2","yyyyyy","valid",false,false);
+		//signIn("s2","yyyyyy","valid",false,false);
 		
 		checkToolBarTitle("Build");
 
@@ -786,7 +553,7 @@ public class Testscript extends androidInterface{
 		//wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//android.view.View[@resource-id='com.sphero.sprk:id/swipe_refresh']/android.widget.ImageView")));
 		//System.out.println("Refresh icon not visible, at top");
 		
-		signOutNoDelete();
+		signOut();
 		checkToolBarTitle("Build");
 	}
 @Test(invocationCount=20)
@@ -803,7 +570,7 @@ public void scrollToBottom() throws Exception{
 			scrollLimit = 10;
 		}
 		
-		signIn("i500","yyyyyy","valid",false,false);
+		//signIn("i500","yyyyyy","valid",false,false);
 		
 		checkToolBarTitle("Build");
 
@@ -836,323 +603,29 @@ public void scrollToBottom() throws Exception{
 		//Assert that programming tutorial is found
 		driver.findElementByName("Programming Tutorial");
 		
-		signOutNoDelete();
+		signOut();
 		checkToolBarTitle("Build");
 	}
 	
 
 	
-	@Test//(invocationCount=10)
-	public void viewExploreProgram() throws Exception{
-		
-		testLogTitle("View Explore Programs");
-		
-		Boolean progress = false;
-		
-		int numOfProg = countProgram();
-		
-		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='Community']").click();
-		
-		clickProgram();
-		
-		//verify screen element presence
-		driver.findElement(By.id("com.sphero.sprk:id/share_button"));
-		driver.findElement(By.id("com.sphero.sprk:id/single_image"));
-		driver.findElement(By.id("com.sphero.sprk:id/photo"));
-		driver.findElement(By.id("com.sphero.sprk:id/name"));
-		driver.findElement(By.id("com.sphero.sprk:id/robot_section"));
-		driver.findElement(By.id("com.sphero.sprk:id/favourite_section"));
-		driver.findElement(By.id("com.sphero.sprk:id/flag_section"));
-		driver.findElement(By.id("com.sphero.sprk:id/dialog_close"));
-		
-		
-		try{
-			driver.findElements(By.id("com.sphero.sprk:id/progress_bar"));
-			System.out.println("Spinner was found");
-			progress = driver.findElements(By.id("com.sphero.sprk:id/progress_bar")).size()>0;
-		}
-		catch(Exception preload){
-			System.out.println("No spinner was found");
-		}
-		
-		//handle progress indicator blocking tap
-		/*
-		try{
-			Boolean progress = driver.findElements(By.id("com.sphero.sprk:id/progress_bar")).size()>0;
-			if(progress == true){
-				System.out.println("Waiting for progress spinner to disappear");
-				while(driver.findElement(By.id("com.sphero.sprk:id/progress_bar")).isDisplayed()){
-					Thread.sleep(2000);
-				}
-			}
-		}
-		catch(Exception e){
-			System.out.println("No progress indicator was found");
-		}
-		*/
-		
-		if(driver.findElementsById("com.sphero.sprk:id/playable_media_overlay").size()==0){
-			if(progress==true){
-				wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/progress_bar")));
-			}
-			driver.findElementById("com.sphero.sprk:id/single_image").click();
-			try{
-				driver.findElementById("com.sphero.sprk:id/fullscreen_image");
-				System.out.println("Full screen image opened");
-				driver.pressKeyCode(AndroidKeyCode.BACK);
-			}
-			catch(Exception e){
-				System.out.println("No user attached image");
-			}
-		}
-		else{
-			System.out.println("Video found");
-			//implement view video
-		}
-		
-		driver.findElementById("com.sphero.sprk:id/single_image");
-		clickView();
-		Thread.sleep(2000);
-		if(driver.currentActivity().toLowerCase().contains("unity")){
-			leaveCanvas();
-			driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='My Programs']").click();
-			Assert.assertEquals(numOfProg, countProgram());
-		}
-		else{
-			clickNo(); // close invalid lab file prompt
-			clickClose(); //close program details
-			driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='My Programs']").click();
-			Reporter.log("Viewed an invalid format lab file, did not enter canvas");
-			System.out.println("Invalid lab file");
-		}
-	}
 	
-	@Test(dataProvider = "data-provider")
-	public void viewExploreVideo(String section){
-		testLogTitle("View video in Explore Programs");
-		
-		Boolean videoFound = false;
-		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='Community']").click();
-		
-		while(videoFound==false){
-			try{
-				driver.findElementById("com.sphero.sprk:id/video_badge").click();
-				driver.findElementById("com.sphero.sprk:id/playable_media_overlay").click(); //program 
-			
-				videoFound=true;
-				System.out.println("Clicked video play icon");
-				
-				//Click youtube
-				try{
-					driver.findElementByName("YouTube").click();
-				}
-				catch(Exception e){
-					System.out.println("Youtube icon doesn't exist");
-				}
-				//click once 
-				try{
-					driver.findElementById("android:id/button_once").click();
-				}
-				catch(Exception e){
-					System.out.println("Just Once doesn't exist");
-				}
-				if(driver.currentActivity().toLowerCase().contains("youtube")){
-					System.out.println("In youtube app");
-					driver.pressKeyCode(AndroidKeyCode.BACK);
-					break;
-				}
-				//click once 
-				
-			}
-			catch(Exception e){
-				System.out.println("Video badge not found");
-			}
-			scrollVertical("down",1500);
-		}
-		clickClose();
-		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='My Programs']").click();
-	}
 	
-	@Test
-	public void copyExploreProgram() throws Exception{
-		
-		testLogTitle("Copy Explore Programs");
-		
-		int numOfProg = countProgram();
-		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='Community']").click();
-		
-		clickProgram();
-		clickClose();
-		clickProgram();
-		clickCopy();
-		clickOk();//confirm name
-		try{
-			clickOk(); //ok
-		}
-		catch(Exception e){
-			clickNo();
-			driver.findElementById("com.sphero.sprk:id/dialog_close");
-			System.out.println("Invalid lab file");
-			clickClose();
-			Reporter.log("Tried to copy invalid lab file");
-		}
-		
-		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='My Programs']").click();
-		int numOfProgPost = countProgram();
-		Assert.assertEquals(numOfProgPost, numOfProg+1);
-		System.out.println("Copy of public program exists");
-	}
-
-
 	
-	@Test
-	public void postMedia() throws Exception{
-		
-		testLogTitle("Post Media");
-		
-		uploadSuccess=false;
-		
-		clickMenu();
-		clickMenuItem("explore");
-		dismissHint();
-		
-		clickMediaTab();
-		clickAddMedia();
-		//Dismiss the page
-		driver.findElementById("com.sphero.sprk:id/dialog_title").getText().contains("Add Media");
-		clickClose();
-		clickAddMedia();
-		
-		//Discard dialog
-		driver.findElementById("com.sphero.sprk:id/dialog_title").getText().contains("Add Media");
-		driver.findElementById("com.sphero.sprk:id/choose_sphero").click();
-		clickClose();
-		clickOk();
-		clickAddMedia();
-		driver.findElementById("com.sphero.sprk:id/dialog_title").getText().contains("Add Media");
-		//Tap Publish Now
-		driver.findElementById("com.sphero.sprk:id/publish_button").click();
-		driver.findElementById("com.sphero.sprk:id/dialog_title").getText().contains("Add Media");
-		driver.findElementById("com.sphero.sprk:id/media_description").sendKeys("Media description automated");
-		driver.findElementById("com.sphero.sprk:id/media_title").sendKeys("Media title automated, selecting ollie");
-		driver.hideKeyboard();
-		driver.findElementById("com.sphero.sprk:id/choose_ollie").click();
-		driver.findElementById("com.sphero.sprk:id/add_media_image").click();
-		//Image button
-		driver.findElementById("com.sphero.sprk:id/buttonDefaultPositive").click();
-		//Choose picture on Nexus (may vary between devices) *use try later for various file viewers
-		try{
-			waitShort.until(ExpectedConditions.presenceOfElementLocated(By.id("com.android.documentsui:id/icon_thumb")));
-			driver.findElementById("com.android.documentsui:id/icon_thumb").click();
-		}
-		catch(Exception e){
-			System.out.println("Device is not using stock android document UI");
-			touch.tap((int)(screenWidth*0.50), (int)(screenHeight/4)).perform();
-			Thread.sleep(1500);
-			touch.tap((int)(screenWidth*0.66),screenHeight/4).perform();
-		}
-		
-		driver.findElementById("com.sphero.sprk:id/publish_button").click();
-		System.out.println("Clicked publish button");
-		
-		waitLong.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/toolbar_title")));
-		//check if able to go back to build, if not upload failed
-		if(driver.findElementsById("com.sphero.sprk:id/dialog_title").size()==0){
-			uploadSuccess=true;
-			System.out.println("Upload success");
-		}
-		else{
-			Assert.fail("Upload failed");
-			System.out.println("Upload failed");
-		}
-	}
 	
 	@DataProvider(name = "data-provider")
     public Object[][] dataProviderMethod() {
         return new Object[][] { { "exploreprograms" }, { "media" } };
 	}
 	
-	@Test
-	//@Parameters("section")
-	(dataProvider = "data-provider")
-	public void scrollExplore(String section) throws Exception{
-		
-		if(section.toLowerCase().equals("media")){
-			testLogTitle("Scroll Explore Media");
-		}
-		else{
-			testLogTitle("Scroll Explore Programs");
-		}
-		
-		int scrollLimit ;
-		
-		
-		if(screenWidth>screenHeight){
-			scrollLimit = 5;
-		}
-		else{
-			scrollLimit = 10;
-		}
-		
-		clickMenu();
-		clickMenuItem("explore");
 	
-		dismissHint();
-		
-		if(section.toLowerCase().equals("media")){
-			clickMediaTab();
-		}
-		
-		int scrollCount = 0;
-		while(true){
-			scrollVertical("down",200);
-			scrollCount++;
-			try{
-				Boolean footer = driver.findElementsById("com.sphero.sprk:id/progress_bar").size()>0;
-				if (footer == true){
-					System.out.println("Spinner found, waiting 5 seconds before scrolling again");
-					Thread.sleep(5000);
-					footer = false;
-					scrollCount = 0;
-				}
-				if (footer == false && scrollCount>scrollLimit){
-					System.out.println("End of my programs");
-					break;
-				}
-			}
-			catch(Exception e){
-				System.out.println("Footer refresh not found");
-			}
-		}
-		
-		
-		while (true){
-			scrollVertical("up",200);
-			try{
-			Boolean header = driver.findElementsByXPath("//android.view.View[@resource-id='com.sphero.sprk:id/swipe_refresh']/android.widget.ImageView").size() > 0 ;
-				if (header == true){
-					System.out.println("Found refresh icon");
-					break;
-				}
-			}
-			catch(Exception e){
-				System.out.println("Something went wrong scrolling up");
-			}
-		}
-		
-		clickMenu();
-		clickMenuItem("build");
-	}
-
 	
 	@Test
 	@Parameters("date")
-	public void scrollTwitter(String date){
-		testLogTitle("Scroll through Twitter");
+	public void scrollFeed(String date){
+		testLogTitle("Scroll through feed");
 
-		clickMenu();
-		clickMenuItem("Explore");
-		clickTwitterTab();
+		clickNavBar("Home");
 		
 		int scrollCount = 0;
 		Boolean found = false;
@@ -1179,6 +652,74 @@ public void scrollToBottom() throws Exception{
 		if(found==false){
 			Assert.fail("Twitter post date not found");
 		}
+	}
+	
+	@Test
+	public void Settings(){
+		clickNavBar("Home");
+		clickTab("Settings");
+		
+		//check version presence
+		driver.findElementById("com.sphero.sprk:id/app_version_text");
+		
+		List <WebElement> SettingsList = driver.findElementsByXPath("//*[@resource-id='com.sphero.sprk:id/settings_card_view']//android.widget.TextView");
+		
+		Assert.assertEquals( SettingsList.get(0).getText(), "About");
+		Assert.assertEquals( SettingsList.get(1).getText(), "Support");
+		Assert.assertEquals( SettingsList.get(2).getText(), "Contact Sphero");
+		Assert.assertEquals( SettingsList.get(3).getText(), "Force Firmware Update");
+		
+		
+		//check sleep switch text
+		String sleep = driver.findElementById("com.sphero.sprk:id/stay_awake_switch").getAttribute("checked");
+		if(sleep.equals("true")){
+			Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/stay_awake_switch").getText(), "Sleep While Charging ON");
+			driver.findElementById("com.sphero.sprk:id/stay_awake_switch").click();
+			Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/stay_awake_switch").getText(), "Sleep While Charging OFF");
+		}
+		else{
+			Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/stay_awake_switch").getText(), "Sleep While Charging OFF");
+			driver.findElementById("com.sphero.sprk:id/stay_awake_switch").click();
+			Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/stay_awake_switch").getText(), "Sleep While Charging ON");
+		}
+		
+		//driver.findElementById("com.sphero.sprk:id/about_button").click();
+		
+		//About button
+		SettingsList.get(0).click();
+		try{
+			driver.findElementById("android:id/button_once").click();
+		}
+		catch(Exception e){
+			System.out.println("Just once/Always not found");
+		}
+		String site = driver.findElementById("com.android.chrome:id/url_bar").getText();
+		Assert.assertEquals(site,"https://sphero-staging.cwist.com/about");
+		driver.pressKeyCode(AndroidKeyCode.BACK);
+		
+		//Contact Support
+		SettingsList.get(1).click();
+		try{
+			driver.findElementById("android:id/button_once").click();
+		}
+		catch(Exception e){
+			System.out.println("Just once/Always not found");
+		}
+		site = driver.findElementById("com.android.chrome:id/url_bar").getText();
+		Assert.assertEquals(site,"https://sphero.zendesk.com/hc/en-us");
+		driver.pressKeyCode(AndroidKeyCode.BACK);
+		
+		//Contact Sphero button
+		SettingsList.get(2).click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/dialog_title").getText(), "Contact Sphero");
+		
+		List <WebElement> contactList = driver.findElementsById("com.sphero.sprk:id/spinner_text");
+		
+		Assert.assertEquals( contactList.get(0).getText(), "Orders");
+		Assert.assertEquals( contactList.get(1).getText(), "Tech Support");
+		Assert.assertEquals( contactList.get(2).getText(), "Education Team Questions");
+		clickButton("yes");
+	
 	}
 	
 	//@Test(dependsOnMethods={"signIn"})
@@ -1212,147 +753,6 @@ public void scrollToBottom() throws Exception{
 	}
 
 
-	//Check unauthenticated user gate prompt visibility
-	@Test
-	public void userGates(){
-		
-		testLogTitle("User gates from signed out");
-		
-		clickMenu();
-		clickMenuItem("Explore");
-		//goToActivity("explore");
-		
-		//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/toolbar_title")));
-		dismissHint();
-		//Click on the first program
-		clickProgram();
-		//Wait for the drawer to appear
-		clickView();
-		driver.findElementById("com.sphero.sprk:id/content");
-		System.out.println("View User Gate Present");
-		clickNo();
-		System.out.println("Clicked Maybe Later");
-		//Click on Make a Copy
-		clickCopy();
-		driver.findElementById("com.sphero.sprk:id/content");
-		System.out.println("Copy User Gate Present");
-		clickNo();
-		System.out.println("Clicked Maybe Later");
-		
-		clickClose();
-		clickMediaTab();
-		clickAddMedia();
-		driver.findElementById("com.sphero.sprk:id/content");
-		System.out.println("Media User Gate Present");
-		clickNo();
-		clickMenu();
-		clickMenuItem("build");
-	}
-	
-	
-	@Test
-	public void viewProgramStatus(){
-		
-		WebElement publicProgram = driver.findElement(By.id("com.sphero.sprk:id/program_image"));
-		
-		
-		List<WebElement> programs = driver.findElements(By.xpath("//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout"));
-		for(WebElement temp : programs){
-			System.out.println(temp.getText());
-		}
-		
-		checkPublicProgramOrder();
-		
-		//overflow button for public
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='0']//android.widget.ImageButton")).click();
-		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Public"); //check status
-		Assert.assertEquals(driver.findElement(By.id("com.sphero.sprk:id/program_public_switch")).getAttribute("checked"), "true");//check switch status
-		driver.findElement(By.id("com.sphero.sprk:id/share_button")); //check visibility of share btuton
-		clickSphero();
-		clickSave();
-		clickNo();
-		clickSphero();
-		clickClose();
-		
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='1']//android.widget.ImageButton")).click();
-		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Rejected");
-		Assert.assertEquals(driver.findElement(By.id("com.sphero.sprk:id/program_public_switch")).getAttribute("checked"), "false");
-		clickClose();
-		
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='2']//android.widget.ImageButton")).click();
-		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review");
-		Assert.assertEquals(driver.findElement(By.id("com.sphero.sprk:id/program_public_switch")).getAttribute("checked"), "true");
-		clickSphero();
-		clickSave();
-		clickNo();
-		clickSphero();//undo
-		clickClose();
-
-	}
-	@Test
-	public void publicProgramGate(){
-		
-		checkPublicProgramOrder();
-		//overflow button for public
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='0']")).click();
-		clickOk(); //go to canvas
-		leaveCanvas();
-		checkToolBarTitle("Build");
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='0']")).click();
-		clickNo(); //cancel
-		
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='1']")).click();
-		leaveCanvas();
-		checkToolBarTitle("Build");
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='2']")).click();
-		clickOk(); //continue
-		leaveCanvas();
-		checkToolBarTitle("Build");
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='2']")).click();
-		clickNo(); //cancel	
-		checkPublicProgramOrder();
-	}
-	
-	public void checkPublicProgramOrder(){
-		String program0 = driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='0']//android.widget.TextView[@index='0']")).getText();
-		String program1 = driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='1']//android.widget.TextView[@index='0']")).getText();
-		String program2 = driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='2']//android.widget.TextView[@index='0']")).getText();
-		String program3 = driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='3']//android.widget.TextView[@index='0']")).getText();
-		
-		//0 public, 1 rejected, pos 2 : in review , pos3: video
-		Assert.assertEquals(program0, "public");
-		Assert.assertEquals(program1, "rejected");
-		Assert.assertEquals(program2, "inreview");
-		Assert.assertEquals(program3, "video");
-	}
-	
-	//Where the menu button is visible
-	public void goToActivity(String s){
-		System.out.println("Going to " + s);
-		clickMenu();
-		List<WebElement> allTextView = driver.findElements(By.id("com.sphero.sprk:id/menu_item_text")); 
-
-		//find the string in the list of webelements and click
-		for (WebElement temp : allTextView) {
-			System.out.println(temp.getText());
-			if(temp.getText().toLowerCase().equals(s.toLowerCase())){
-				temp.click();
-				break;
-			}	
-		}
-		//Use a different method to check screen for drive for Tablets since it's a drawer
-		if(s.toLowerCase().equals("drive") && screenWidth>screenHeight){
-			wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/background")));
-			System.out.println("Tablet with Drive drawer appeared");
-		}
-		else{
-			wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/toolbar_title")));
-			//Verify screen is Explore
-			String screen = driver.findElementById("com.sphero.sprk:id/toolbar_title").getText();
-			Assert.assertEquals(screen.toLowerCase(),s.toLowerCase());
-			System.out.println(s + " screen was found");
-		}
-	}
 	
 	public void verifyToolbar(String s){
 		String screen = driver.findElementById("com.sphero.sprk:id/toolbar_title").getText().toLowerCase();
@@ -1366,103 +766,9 @@ public void scrollToBottom() throws Exception{
 		System.out.println("========================================");
 	}
 	
-	@Test
-	public void signUp12YearsUnder(){
-		clickMenu();
-		clickPocketNavSignIn();
-		driver.findElementById("com.sphero.sprk:id/sign_up_button").click();
-		driver.findElementById("com.sphero.sprk:id/select_student").click();
-		driver.findElementById("com.sphero.sprk:id/continue_button").click();
-		driver.findElementById("com.sphero.sprk:id/initials_et").sendKeys("abc");
-		//driver.hideKeyboard();
-		driver.findElementById("com.sphero.sprk:id/guardian_email_et").sendKeys("asd23fk31efvm@sadlkfjkasdfjesac.com");
-		driver.hideKeyboard();
-		driver.findElementById("com.sphero.sprk:id/request_access_button").click();
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/continue_button")));
-		driver.findElementById("com.sphero.sprk:id/continue_button").click();
-		checkToolBarTitle("Build");
-	}
 	
-	@Parameters({"student_username","student_email","password"})
-	@Test
-	public void signUp13Years(String student_username,String student_email,String password) throws Exception{
-		clickMenu();
-		clickPocketNavSignIn();
-		driver.findElementById("com.sphero.sprk:id/sign_up_button").click();
-		driver.findElementById("com.sphero.sprk:id/select_student").click();
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("android:id/pickers")));
-		driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").click();
-		driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").clear();
-		driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").sendKeys("2000");
-		
-		
-		driver.findElementByXPath("//android.widget.NumberPicker[@index='0']/android.widget.EditText").clear();
-		driver.findElementByXPath("//android.widget.NumberPicker[@index='0']/android.widget.EditText").sendKeys("A");
-		
-		//driver.findElementByXPath("//android.widget.NumberPicker[@index='1']/android.widget.EditText").clear();
-		//driver.findElementByXPath("//android.widget.NumberPicker[@index='1']/android.widget.EditText").sendKeys("11");
-		
-		
-		driver.hideKeyboard();
-		driver.findElementById("com.sphero.sprk:id/continue_button").click();
-		
-		driver.findElementById("com.sphero.sprk:id/class_name_helper").click();
-		driver.findElementById("com.sphero.sprk:id/buttonDefaultNeutral").click();
-		//driver.findElementById("com.sphero.sprk:id/class_name_et").clear();
-		//driver.findElementById("com.sphero.sprk:id/class_name_et").sendKeys("classname");
-		driver.findElementById("com.sphero.sprk:id/reenter_password_et").sendKeys(password);
-		driver.findElementById("com.sphero.sprk:id/password_et").sendKeys(password);
-		driver.findElementById("com.sphero.sprk:id/email_et").sendKeys(student_email);
-		driver.findElementById("com.sphero.sprk:id/username_et").sendKeys(student_username);
-		driver.pressKeyCode(AndroidKeyCode.BACK);
-		Thread.sleep(2000); //sign up button to shift
-		driver.findElementById("com.sphero.sprk:id/create_account_button").click();
-		
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/verify_account_button")));
-		Thread.sleep(10000); //wait for email to be sent
-		Firefox();
-		
-		Thread.sleep(30000);
-		driver.findElementById("com.sphero.sprk:id/verify_account_button").click();
-		checkToolBarTitle("Build");
-		dismissHint();
-		signOut();
-		//do automated gmail account verification
-		
-		//com.sphero.sprk:id/verify_account_button
-		//com.sphero.sprk:id/do_this_later_button
-	}
-	@Parameters({"instructor_username","instructor_email","password"})
-	@Test
-	public void signUpInstructor(String instructor_username,String instructor_email,String password) throws Exception{
-		clickMenu();
-		clickPocketNavSignIn();
-		driver.findElementById("com.sphero.sprk:id/sign_up_button").click();
-		driver.findElementById("com.sphero.sprk:id/select_instructor").click();
-		driver.findElementById("com.sphero.sprk:id/reenter_password_et").click();
-		driver.findElementById("com.sphero.sprk:id/reenter_password_et").sendKeys(password);
-		driver.findElementById("com.sphero.sprk:id/password_et").click();
-		driver.findElementById("com.sphero.sprk:id/password_et").sendKeys(password);
-		driver.findElementById("com.sphero.sprk:id/email_et").click();
-		driver.findElementById("com.sphero.sprk:id/email_et").sendKeys(instructor_email);
-		driver.findElementById("com.sphero.sprk:id/username_et").click();
-		driver.findElementById("com.sphero.sprk:id/username_et").sendKeys(instructor_username);
-		driver.pressKeyCode(AndroidKeyCode.BACK);
-		Thread.sleep(2000); //sign up button to shift
-		driver.findElementById("com.sphero.sprk:id/continue_signup_button").click();
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/verify_account_button")));
-		Thread.sleep(10000); //wait for email to be sent
-		Firefox();
-		
-		Thread.sleep(30000);
-		driver.findElementById("com.sphero.sprk:id/verify_account_button").click();
-		checkToolBarTitle("Build");
-		dismissHint();
-		signOut();
-		
 	
-	}
-	
+/*
 	@Test
 	public void Firefox(){
 		WebDriverWait waitWeb = new WebDriverWait(web,30);
@@ -1495,15 +801,8 @@ public void scrollToBottom() throws Exception{
 		driver.switchTo().window(winHandleBefore);
 		
 		web.findElementByXPath("//*[aria-label='Delete']").click();
-		/*
-		while(web.findElementByXpath("//*[text()='Sphero']").size()>0){
-			web.findElementByXpath("//*[text()='Sphero']").click();
-			web.findElementByXPath("//*[aria-label='Delete']").click();
-			
-		
-		}
-		*/
 	}
+*/
 	
 	
 
