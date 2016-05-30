@@ -5,12 +5,14 @@
  <parameter name="instructor_username" value="ffsi5"/>
  <parameter name="password" value="yyyyyy"/>
  <parameter name="instructor_email" value="ffsqatsignup+i5@gmail.com"/>
+  <parameter name="student_username" value="ffss2"/>
+ <parameter name="student_email" value="ffsqatsignup+s2@gmail.com"/>
  
   <test name="Single test">
   	<classes>
   	    <class name="start.Testscript">
   	        <methods>
-  	            <include name="signUpInstructor"/>
+  	            <include name="signInNavigate"/>
   	        </methods>
   	    </class>
   	</classes>

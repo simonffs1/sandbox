@@ -339,41 +339,5 @@ public class myPrograms extends Testscript {
 		checkPublicProgramOrder();
 	}
 	
-	//Check unauthenticated user gate prompt visibility
-	@Test
-	public void userGates(){
-		
-		testLogTitle("User gates from signed out");
-		
-		clickMenu();
-		clickMenuItem("Explore");
-		//goToActivity("explore");
-		
-		//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/toolbar_title")));
-		
-		//Click on the first program
-		clickProgram();
-		//Wait for the drawer to appear
-		clickView();
-		driver.findElementById("com.sphero.sprk:id/content");
-		System.out.println("View User Gate Present");
-		clickButton("no");
-		System.out.println("Clicked Maybe Later");
-		//Click on Make a Copy
-		clickCopy();
-		driver.findElementById("com.sphero.sprk:id/content");
-		System.out.println("Copy User Gate Present");
-		clickButton("no");
-		System.out.println("Clicked Maybe Later");
-		
-		clickClose();
-		clickMediaTab();
-		clickAddMedia();
-		driver.findElementById("com.sphero.sprk:id/content");
-		System.out.println("Media User Gate Present");
-		clickButton("no");
-		clickMenu();
-		clickMenuItem("build");
-	}
 	
 }

@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.interactions.Actions;
@@ -312,13 +313,20 @@ public class Testscript extends androidInterface{
 		
 		driver.findElementById("com.sphero.sprk:id/select_student").click();
 		driver.findElementById("com.sphero.sprk:id/continue_button").click();
+		
+		driver.findElementById("com.sphero.sprk:id/request_access_button").click();
+		//find error messages
+		driver.findElementByXPath("//android.widget.TextView[@text='Please enter your initials']");
+		driver.findElementByXPath("//android.widget.TextView[@text='Please enter a valid email address.']");
+		
+		driver.findElementById("com.sphero.sprk:id/guardian_email_et").sendKeys("ffsqatsignup@gmail.com");
 		driver.findElementById("com.sphero.sprk:id/initials_et").sendKeys("abc");
-		//driver.hideKeyboard();
-		driver.findElementById("com.sphero.sprk:id/guardian_email_et").sendKeys("asd23fk31efvm@sadlkfjkasdfjesac.com");
-		driver.hideKeyboard();
+		driver.pressKeyCode(AndroidKeyCode.BACK);
 		driver.findElementById("com.sphero.sprk:id/request_access_button").click();
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/continue_button")));
+		
 		driver.findElementById("com.sphero.sprk:id/continue_button").click();
+		Firefox("abc");
 		driver.findElement(By.id("com.sphero.sprk:id/sign_in_button"));
 	}
 	
@@ -336,26 +344,33 @@ public class Testscript extends androidInterface{
 		clickButton("sign up");
 		
 		driver.findElementById("com.sphero.sprk:id/select_student").click();
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("android:id/pickers")));
-		driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").click();
-		driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").clear();
-		driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").sendKeys("2000");
+		//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("android:id/pickers")));
+		int xloc = driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").getLocation().getX();
+		int yloc = driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").getLocation().getY();
+		
+		driver.swipe(xloc, yloc, xloc, (int)(screenHeight*0.7), 400);
+		
+		String year = driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").getText();
+		int i = Integer.parseInt(year);
+		
+		//swipe again if student is not older than 13 years old
+		if( 2016-i<13){
+			driver.swipe(xloc, yloc, xloc, (int)(screenHeight*0.7), 400);
+		}
+		
+		year = driver.findElementByXPath("//android.widget.NumberPicker[@index='2']/android.widget.EditText").getText();
+		i = Integer.parseInt(year);
+		
+		System.out.println("Student age: " + (2016-i));
 		
 		
-		driver.findElementByXPath("//android.widget.NumberPicker[@index='0']/android.widget.EditText").clear();
-		driver.findElementByXPath("//android.widget.NumberPicker[@index='0']/android.widget.EditText").sendKeys("A");
-		
-		//driver.findElementByXPath("//android.widget.NumberPicker[@index='1']/android.widget.EditText").clear();
-		//driver.findElementByXPath("//android.widget.NumberPicker[@index='1']/android.widget.EditText").sendKeys("11");
-		
-		
-		driver.hideKeyboard();
 		driver.findElementById("com.sphero.sprk:id/continue_button").click();
 		driver.findElementById("com.sphero.sprk:id/class_name_helper").click();
 		clickButton("ok");
 		//driver.findElementById("com.sphero.sprk:id/class_name_et").clear();
 		//driver.findElementById("com.sphero.sprk:id/class_name_et").sendKeys("classname");
 		driver.findElementById("com.sphero.sprk:id/reenter_password_et").sendKeys(password);
+		driver.findElementById("com.sphero.sprk:id/password_et").click();
 		driver.findElementById("com.sphero.sprk:id/password_et").sendKeys(password);
 		driver.findElementById("com.sphero.sprk:id/email_et").sendKeys(student_email);
 		driver.findElementById("com.sphero.sprk:id/username_et").sendKeys(student_username);
@@ -386,7 +401,7 @@ public class Testscript extends androidInterface{
 		driver.findElementById("com.sphero.sprk:id/verify_account_button").click();
 		driver.findElementById("com.sphero.sprk:id/verification_failed");
 		
-		Thread.sleep(5000); //wait for email to be sent
+		Thread.sleep(2000); //wait for email to be sent
 		
 		Firefox();
 		
@@ -413,6 +428,7 @@ public class Testscript extends androidInterface{
 		clickButton("sign up");
 		
 		driver.findElementById("com.sphero.sprk:id/select_instructor").click();
+		
 		driver.findElementById("com.sphero.sprk:id/reenter_password_et").click();
 		driver.findElementById("com.sphero.sprk:id/reenter_password_et").sendKeys(password);
 		driver.findElementById("com.sphero.sprk:id/password_et").click();
@@ -463,10 +479,66 @@ public class Testscript extends androidInterface{
 		signedUp = false;
 
 	}
-
 	
+	@Test
+	public void signInNavigate(){
+		
+		//navigate to student and back
+		if(signedIn==true){
+			signOut();
+		}
+		clickNavBar("home");
+		clickTab("profile");
+		
+		clickButton("sign in");
+		clickButton("sign up");
+		
+		driver.findElementById("com.sphero.sprk:id/select_student").click();
+		
+		//check sign up with clever button
+		driver.findElementById("com.sphero.sprk:id/clever_sign_up_button").click();
+		System.out.println("Clicked clever sign up button in Student");
+		
+		checkSite("https://sphero-staging.cwist.com/account/sign_up/");
+		
+		clickButton("back");
+		
+		driver.findElementById("com.sphero.sprk:id/select_instructor").click();
+		
+		//click sign up with clever button
+		driver.findElementById("com.sphero.sprk:id/clever_sign_up_button").click();
+		System.out.println("Clicked clever sign up button in Instructor");
+		
+		checkSite("https://sphero-staging.cwist.com/account/sign_up/");
+		
+		clickButton("back");
+		clickButton("back");
+		
+		clickButton("sign in");
+		driver.findElementById("com.sphero.sprk:id/forgot_password_button").click();
+		System.out.println("Clicked Forgot Password button");
+		
+		checkSite("https://sphero-staging.cwist.com/account/forgot_password/");
+		
+		clickButton("back");
+		clickButton("x");
+		
+		System.out.println("Sign In navigation success");
+	}
 	
-
+	public void checkSite(String s){
+		try{
+			driver.findElementById("android:id/button_once").click();
+		}
+		catch(Exception e){
+			System.out.println("Just once/Always not found");
+		}
+		
+		String site = driver.findElementById("com.android.chrome:id/url_bar").getText();
+		Assert.assertEquals(site,s);
+		System.out.println(site);
+		driver.pressKeyCode(AndroidKeyCode.BACK);
+	}
 	
 
 	
@@ -817,6 +889,8 @@ public void scrollToBottom() throws Exception{
 
 		//click on email
 		web.findElementByCssSelector("td[tabindex='-1']").click();
+		
+
 		//click activate
 		web.findElementByXPath("//a[text()='Activate Account']").click();
 		
@@ -853,7 +927,43 @@ public void scrollToBottom() throws Exception{
 		System.out.println("Deleted emails, closing firefox");
 		
 		signedUp = true;
+	}
+	
+public void Firefox(String s){
 		
+		System.out.println("Launching Firefox to check account request email");
+		
+		web = new FirefoxDriver();
+		web.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+		
+		WebDriverWait waitWeb = new WebDriverWait(web,30);
+		web.get("https://www.gmail.com"); 
+		
+		// Store the current window handle
+		String winHandleBefore = web.getWindowHandle();
+		System.out.println(winHandleBefore);
+		
+		web.findElementByXPath(".//*[@id='Email']").sendKeys("ffsqatsignup@gmail.com");
+		web.findElementByXPath(".//*[@id='next']").click();
+		web.findElementByXPath(".//*[@id='Passwd']").sendKeys("middlefinger");
+		web.findElementByXPath(".//*[@id='signIn']").click();
+		waitWeb.until(ExpectedConditions.urlContains("#inbox"));
+
+		//click on email
+		web.findElementByCssSelector("td[tabindex='-1']").click();
+		//find sentence
+		web.findElementByXPath(".//*[text()='" + s + " asked to join the SPRK Lightning Lab. If you approve, follow the steps below:']");
+		System.out.println("Request email received");
+
+		//keyboard shortcut # to delete
+		Actions action = new Actions(web); 
+		//delete request email
+		action.sendKeys(String.valueOf('\u0023')).perform();
+		waitWeb.until(ExpectedConditions.urlContains("#inbox"));
+				
+		web.quit();
+		
+		System.out.println("Deleted  request email, closing firefox");
 	}
 
 	
