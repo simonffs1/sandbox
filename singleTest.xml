@@ -10,9 +10,9 @@
  
   <test name="Single test">
   	<classes>
-  	    <class name="start.Testscript">
+  	    <class name="start.communityPrograms">
   	        <methods>
-  	            <include name="signInNavigate"/>
+  	            <include name="viewProgram"/>
   	        </methods>
   	    </class>
   	</classes>

@@ -50,6 +50,8 @@ public class androidInterface implements clickableObjects {
 			System.out.println("Not a valid item in the nav bar");
 		}
 		
+		System.out.println("Clicked " + item + " in nav bar");
+		
 		//chcek the name of the button is shown to match expected
 		driver.findElementById("com.sphero.sprk:id/bottom_navigation_small_item_title").getText().toLowerCase().equals(item);
 		
@@ -80,11 +82,15 @@ public class androidInterface implements clickableObjects {
 		for(WebElement temp:tabs){
 			if (temp.getText().toLowerCase().equals(s)){
 				temp.click();
-				System.out.println("Clicked " + s);
+				System.out.println("Clicked " + s + " tab");
+				if(s.equals("profile")){
+					wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/profile_image")));
+				}
 				Assert.assertEquals(temp.isSelected(), true);
 				break;
 			}
 		}
+
 		
 	}
 	
@@ -124,12 +130,17 @@ public class androidInterface implements clickableObjects {
 		//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/button_content")));
 		s = s.toLowerCase();
 		
-		String[] positive = {"yes", "ok","okay", "equals","positive","save","delete"};
+		String[] positive = {"yes", "ok","okay", "equals","positive","save","delete","done"};
 		ArrayUtils.contains(positive,s);
 
 		//Yes
 		if(ArrayUtils.contains(positive,s)){
+			if(driver.findElementsById("com.sphero.sprk:id/dialog_action").size()==1){
+				driver.findElement(By.id("com.sphero.sprk:id/dialog_action")).click();
+			}
+			else{
 			driver.findElementById("com.sphero.sprk:id/positive_action").click();
+			}
 		}
 		//No
 		else if(s.equals("no") || s.equals("cancel")  || s.equals("negative")){
@@ -162,6 +173,54 @@ public class androidInterface implements clickableObjects {
 		}
 		else if(s.equals("continue")){
 			driver.findElementById("com.sphero.sprk:id/continue_button").click();
+		}
+		else if(s.equals("sphero")|| s.equals("choose sphero")){
+			//edit button
+			if(driver.findElementsById("com.sphero.sprk:id/sphero_button").size()==1){
+				driver.findElementById("com.sphero.sprk:id/sphero_button").click();
+			}
+			//connect robot button
+			else if(driver.findElementsById("com.sphero.sprk:id/choose_sphero_button").size()==1){
+				driver.findElementById("com.sphero.sprk:id/choose_sphero_button").click();
+			}
+			//filter button
+			else{
+				driver.findElementById("com.sphero.sprk:id/filter_sphero").click();
+			}
+		}
+		else if(s.equals("bb8")|| s.equals("choose bb8")){
+			//edit button
+			if(driver.findElementsById("com.sphero.sprk:id/bb8_button").size()==1){
+				driver.findElementById("com.sphero.sprk:id/bb8_button").click();
+			}
+			//connect robot button
+			else if(driver.findElementsById("com.sphero.sprk:id/choose_bb8_button").size()==1){
+				driver.findElementById("com.sphero.sprk:id/choose_bb8_button").click();
+			}
+			//filter button
+			else{
+				driver.findElementById("com.sphero.sprk:id/filter_bb8").click();
+			}
+		}
+		else if(s.equals("ollie")|| s.equals("choose ollie")){
+			//edit button
+			if(driver.findElementsById("com.sphero.sprk:id/ollie_button").size()==1){
+				driver.findElementById("com.sphero.sprk:id/ollie_button").click();
+			}
+			//connect robot button
+			else if(driver.findElementsById("com.sphero.sprk:id/choose_ollie8_button").size()==1){
+				driver.findElementById("com.sphero.sprk:id/choose_ollie_button").click();
+			}
+			//filter button
+			else{
+				driver.findElementById("com.sphero.sprk:id/filter_ollie").click();
+			}
+		}
+		else if(s.equals("sprk+")){
+			driver.findElementById("com.sphero.sprk:id/choose_sprk_plus_button").click();
+		}
+		else if(s.equals("connect robot")){
+			driver.findElementById("com.sphero.sprk:id/connect_robot_button").click();
 		}
 		
 		System.out.println("Clicked " + s + " button");
@@ -204,7 +263,15 @@ public class androidInterface implements clickableObjects {
 	//Shared between build and explore
 	public void clickProgram(){
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
-		driver.findElementById("com.sphero.sprk:id/program_image").click();
+	
+		if(driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='0']//*[@resource-id='com.sphero.sprk:id/program_name']").getText().equals("Canvas Tutorial")){
+			driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='1']").click();
+			System.out.println(driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='1']//*[@resource-id='com.sphero.sprk:id/program_name']").getText());
+		}
+		else{
+			driver.findElementById("com.sphero.sprk:id/program_image").click();
+			System.out.println(driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='0']//*[@resource-id='com.sphero.sprk:id/program_name']").getText());
+		}
 		System.out.println("Clicked a program");
 	}
 	public void clickCopy(){
@@ -226,16 +293,6 @@ public class androidInterface implements clickableObjects {
 	public void closeSignIn(){
 		
 	}
-	public void clickSphero(){
-		driver.findElementById("com.sphero.sprk:id/choose_sphero").click();
-	}
-	public void clickOllie(){
-		driver.findElementById("com.sphero.sprk:id/choose_ollie").click();
-	}
-	public void clickBB8(){
-		driver.findElementById("com.sphero.sprk:id/choose_bb8").click();
-	}
-	
 
 	//Explore
 	public void clickExploreTab(){
@@ -293,10 +350,11 @@ public class androidInterface implements clickableObjects {
 	}
 	
 	//Pocketnav
-	public void clickConnectRobot(){
-		driver.findElementById("com.sphero.sprk:id/header_not_connected").click();
+	public void checkConnectRobot(){
+		driver.findElementById("com.sphero.sprk:id/connect_robot_button").click();
 		//Verify robot buttons exists
 		driver.findElementById("com.sphero.sprk:id/choose_sphero_button");
+		driver.findElementById("com.sphero.sprk:id/choose_sprk_plus_button");
 		driver.findElementById("com.sphero.sprk:id/choose_ollie_button");
 		driver.findElementById("com.sphero.sprk:id/choose_bb8_button");
 		System.out.println("Connect Sphero clicked and elements found");

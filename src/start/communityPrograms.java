@@ -1,43 +1,77 @@
 package start;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.UUID;
+
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.testng.Assert;
 import org.testng.Reporter;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import io.appium.java_client.android.AndroidKeyCode;
 
 public class communityPrograms extends myPrograms {
+	
+	@Test
+	public void canvasTutorialCard(){
+		clickNavBar("programs");
+		clickTab("Sphero");
+		driver.findElementByXPath("//android.support.v7.widget.RecyclerView//android.widget.RelativeLayout[@index='0']").click();
+		driver.findElementById("com.sphero.sprk:id/fragment_container");
+		clickButton("x");
+		//dismissed connect robot
+		Assert.assertEquals(driver.findElementsById("com.sphero.sprk:id/fragment_container").size(), 0);
+	}
 
 	
-	@Test //open a sample program and copy
-	public void copySampleProgram() throws Exception{
-		testLogTitle("View and Copy a Sample Program");
+	@Test(dataProvider = "program-tabs")
+	public void copyProgram(String s) throws Exception{
+		testLogTitle("Copy a " + s + " Program");
+		
+		if(signedIn==false){
+			signIn("ffsi4","yyyyyy","instructor",true,false,false);
+		}
+		
+		clickNavBar("programs");
+		if(driver.findElementsById("com.sphero.sprk:id/no_content_container").size()==1){
+			System.out.println("0 Programs");
+		}
+		else{
+			wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
+		}
+		
 		int numOfProg = countProgram();
-		clickSampleProgramsTab();
+		clickTab(s);
 		clickProgram();
-		clickCopy();
-		clickButton("yes"); //confirm
+		driver.findElementById("com.sphero.sprk:id/copy_button").click();
+		clickButton("yes"); //save
 		clickButton("yes"); //ok
-		checkToolBarTitle("Build");
-		clickMyProgramsTab();
+		clickButton("x");
+		clickTab("My Programs");
+		if(numOfProg!=0){
+			wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
+		}
 		int numOfProgPost = countProgram();
 		Assert.assertEquals(numOfProgPost, numOfProg+1);
-		System.out.println("A copy of the sample program has been made");
+		System.out.println("A copy of the " + s + " program has been made");
 	}
 	
 	@Test //open a sample program and copy
 	public void copySampleProgramRepeatedly() throws Exception{
-		testLogTitle("View and Copy a Sample Program");
+		testLogTitle("Repeat Copy a Sample Program");
+		clickNavBar("programs");
+		
 		int numOfProg = 0;
 		
-		clickSampleProgramsTab();
-		//driver.findElementByXPath("//*[@class='android.support.v7.app.ActionBar$Tab' and @index='1']").click();
-		//driver.findElementsByXPath("//android.support.v7.app.ActionBar$Tab[@index='1']");
-		while(numOfProg<=500){
+		clickTab("Sphero");
+
+		while(numOfProg<=200){
 			clickProgram();
-			clickCopy();
+			driver.findElementById("com.sphero.sprk:id/copy_button").click();
 			clickButton("yes"); //confirm
 			clickButton("yes"); //ok
 			System.out.println("Program # " + numOfProg +"has been made");
@@ -45,34 +79,22 @@ public class communityPrograms extends myPrograms {
 		}
 	}
 	
-	@Test
-	public void viewSampleProgram() throws Exception{
-		testLogTitle("View a Sample Program");
-		int numOfProg = countProgram();
-		//click sample programs tab
-		clickSampleProgramsTab();
-		//click the first sample program
-		clickProgram();
-		//click view
-		clickView();
-		leaveCanvas();
-		checkToolBarTitle("Build");
-		clickMyProgramsTab();
-		int numOfProgPost = countProgram();
-		Assert.assertEquals(numOfProgPost, numOfProg);
-		System.out.println("No copy is made viewing a program");
-	}
+
 	
 	@Test
 	//@Parameters("section")
-	(dataProvider = "data-provider")
-	public void scrollExplore(String section) throws Exception{
+	//(dataProvider = "data-provider")
+	public void scrollPrograms(String section) throws Exception{
 		
-		if(section.toLowerCase().equals("media")){
-			testLogTitle("Scroll Explore Media");
+		clickNavBar("programs");
+		
+		if(section.toLowerCase().equals("community")){
+			testLogTitle("Scroll Community programs");
+			clickTab("Community");
 		}
 		else{
-			testLogTitle("Scroll Explore Programs");
+			testLogTitle("Scroll Sphero Programs");
+			clickTab("Sphero");
 		}
 		
 		int scrollLimit ;
@@ -84,14 +106,7 @@ public class communityPrograms extends myPrograms {
 		else{
 			scrollLimit = 10;
 		}
-		
-		clickMenu();
-		clickMenuItem("explore");
-	
-		if(section.toLowerCase().equals("media")){
-			clickMediaTab();
-		}
-		
+
 		int scrollCount = 0;
 		while(true){
 			scrollVertical("down",200);
@@ -128,34 +143,79 @@ public class communityPrograms extends myPrograms {
 				System.out.println("Something went wrong scrolling up");
 			}
 		}
-		
-		clickMenu();
-		clickMenuItem("build");
 	}
-	
-	@Test//(invocationCount=10)
-	public void viewExploreProgram() throws Exception{
+	@DataProvider(name = "program-tabs")
+    public Object[][] dataProviderMethod2() {
+        return new Object[][] { {"sphero"},  {"community"} };
+	}
+	@Test(dataProvider = "program-tabs")
+	public void viewProgram(String s) throws Exception{
 		
-		testLogTitle("View Explore Programs");
+		testLogTitle("View " + s + " programs");
+		
+		s = s.toLowerCase();
+		
+		if(signedIn==false){
+			signIn("ffsqat","1","instructor",true,false,false);
+		}
 		
 		Boolean progress = false;
 		
+		clickNavBar("programs");
+		
+		if(driver.findElementsById("com.sphero.sprk:id/no_content_container").size()==1){
+			System.out.println("0");
+		}
+		else{
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
+		}
+		
 		int numOfProg = countProgram();
 		
-		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='Community']").click();
+		clickTab(s);
+	
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
 		
-		clickProgram();
+		if(driver.findElementsById("com.sphero.sprk:id/video_badge").size()>0){
+			System.out.println("Program with a video exists");
+		}
+		
+		for(int i=0;i<4;i++){
+			if(s.equals("sphero") && i==0){
+				i++; //to skip canvas tutorial card
+			}
+			if(driver.findElementsByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='"+i+"']//*[@resource-id='com.sphero.sprk:id/video_badge']").size()==0){
+				System.out.println("Card " + i + " has no video, clicking...");
+				System.out.println(driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='"+i+"']//*[@resource-id='com.sphero.sprk:id/program_name']").getText());
+				driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='"+i+"']").click();
+				break;
+			}
+			else{
+				System.out.println("Card " + i + " has a video");
+			}
+			//if no program is clicked, scroll down and reset index to 0
+			if(i == 3){
+				scrollVertical("down",1000);
+				i = 0;
+			}
+		}
+		
 		
 		//verify screen element presence
 		driver.findElement(By.id("com.sphero.sprk:id/share_button"));
 		driver.findElement(By.id("com.sphero.sprk:id/single_image"));
-		driver.findElement(By.id("com.sphero.sprk:id/photo"));
-		driver.findElement(By.id("com.sphero.sprk:id/name"));
-		driver.findElement(By.id("com.sphero.sprk:id/robot_section"));
-		driver.findElement(By.id("com.sphero.sprk:id/favourite_section"));
-		driver.findElement(By.id("com.sphero.sprk:id/flag_section"));
-		driver.findElement(By.id("com.sphero.sprk:id/dialog_close"));
+		driver.findElement(By.id("com.sphero.sprk:id/photo")); //profile pic
+		driver.findElement(By.id("com.sphero.sprk:id/name")); //username
+	    //driver.findElement(By.id("com.sphero.sprk:id/robot_section")); //robot
+		driver.findElement(By.id("com.sphero.sprk:id/favourite_section")); //like
+		driver.findElement(By.id("com.sphero.sprk:id/flag_section")); //report
+		driver.findElement(By.id("com.sphero.sprk:id/copy_button"));
+		driver.findElement(By.id("com.sphero.sprk:id/view_button"));
+		driver.findElement(By.id("com.sphero.sprk:id/dialog_close")); //x
 		
+		//driver.findElement(By.id("com.sphero.sprk:id/share_button")).click();
+		//driver.findElement(By.id("com.sphero.sprk:id/close_button")).click();
+		/*
 		
 		try{
 			driver.findElements(By.id("com.sphero.sprk:id/progress_bar"));
@@ -165,6 +225,7 @@ public class communityPrograms extends myPrograms {
 		catch(Exception preload){
 			System.out.println("No spinner was found");
 		}
+		*/
 		
 		//handle progress indicator blocking tap
 		/*
@@ -182,124 +243,186 @@ public class communityPrograms extends myPrograms {
 		}
 		*/
 		
-		if(driver.findElementsById("com.sphero.sprk:id/playable_media_overlay").size()==0){
-			if(progress==true){
-				wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/progress_bar")));
-			}
-			driver.findElementById("com.sphero.sprk:id/single_image").click();
-			try{
-				driver.findElementById("com.sphero.sprk:id/fullscreen_image");
-				System.out.println("Full screen image opened");
-				driver.pressKeyCode(AndroidKeyCode.BACK);
-			}
-			catch(Exception e){
-				System.out.println("No user attached image");
-			}
-		}
-		else{
-			System.out.println("Video found");
-			//implement view video
-		}
 		
+		driver.findElementById("com.sphero.sprk:id/single_image").click();
+		driver.findElementById("com.sphero.sprk:id/fullscreen_image");
+		System.out.println("Full screen image opened");
+		driver.findElement(By.id("com.sphero.sprk:id/close_button")).click();
+
 		driver.findElementById("com.sphero.sprk:id/single_image");
-		clickView();
+		driver.findElementById("com.sphero.sprk:id/view_button").click();
 		Thread.sleep(2000);
 		if(driver.currentActivity().toLowerCase().contains("unity")){
 			leaveCanvas();
-			driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='My Programs']").click();
+			clickButton("x");
+			clickTab("My Programs");
+			if(numOfProg!=0){
+				wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
+			}
 			Assert.assertEquals(numOfProg, countProgram());
 		}
 		else{
 			clickButton("no"); // close invalid lab file prompt
-			clickClose(); //close program details
-			driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='My Programs']").click();
+			clickButton("x"); //close program details
+			clickTab("My Programs");
 			Reporter.log("Viewed an invalid format lab file, did not enter canvas");
 			System.out.println("Invalid lab file");
 		}
 	}
-	
-	@Test(dataProvider = "data-provider")
-	public void viewExploreVideo(String section){
-		testLogTitle("View video in Explore Programs");
+	@Test
+	public void FindProgramWithoutVideo(){
+		clickNavBar("Programs");
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
+		WebElement Program = driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='0']");
 		
-		Boolean videoFound = false;
-		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='Community']").click();
+		Program.findElement(By.id("com.sphero.sprk:id/video_badge"));
 		
-		while(videoFound==false){
-			try{
-				driver.findElementById("com.sphero.sprk:id/video_badge").click();
-				driver.findElementById("com.sphero.sprk:id/playable_media_overlay").click(); //program 
-			
-				videoFound=true;
-				System.out.println("Clicked video play icon");
-				
-				//Click youtube
-				try{
-					driver.findElementByName("YouTube").click();
-				}
-				catch(Exception e){
-					System.out.println("Youtube icon doesn't exist");
-				}
-				//click once 
-				try{
-					driver.findElementById("android:id/button_once").click();
-				}
-				catch(Exception e){
-					System.out.println("Just Once doesn't exist");
-				}
-				if(driver.currentActivity().toLowerCase().contains("youtube")){
-					System.out.println("In youtube app");
-					driver.pressKeyCode(AndroidKeyCode.BACK);
-					break;
-				}
-				//click once 
-				
-			}
-			catch(Exception e){
-				System.out.println("Video badge not found");
-			}
-			scrollVertical("down",1500);
-		}
-		clickClose();
-		driver.findElementByXPath("//android.support.v7.app.ActionBar$Tab/android.widget.TextView[@text='My Programs']").click();
+		Assert.assertEquals(Program.findElement(By.id("com.sphero.sprk:id/video_badge")), true);
+		
+		System.out.println("Video icon found in first program");
 	}
 	
-	//Check unauthenticated user gate prompt visibility
-		@Test
-		public void userGates(){
-			
-			testLogTitle("User gates from signed out");
-			
-			clickMenu();
-			clickMenuItem("Explore");
-			//goToActivity("explore");
-			
-			//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/toolbar_title")));
-			
-			//Click on the first program
-			clickProgram();
-			//Wait for the drawer to appear
-			clickView();
-			driver.findElementById("com.sphero.sprk:id/content");
-			System.out.println("View User Gate Present");
+	@Test
+	public void viewCommunityVideo(){
+		testLogTitle("View video in Community Programs");
+		
+		clickNavBar("Programs");
+		clickTab("Community");
+		
+		while(driver.findElementsById("com.sphero.sprk:id/video_badge").size()==0){
+			scrollVertical("down",1000);
+		}
+		driver.findElementById("com.sphero.sprk:id/video_badge").click();
+		driver.findElementById("com.sphero.sprk:id/playable_media_overlay").click(); 
+		System.out.println("Clicked video play icon");
+		
+		//click once 
+		try{
+			driver.findElementById("android:id/button_once").click();
+		}
+		catch(Exception e){
+			System.out.println("Just Once doesn't exist");
+		}
+		if(driver.currentActivity().toLowerCase().contains("youtube")){
+			System.out.println("In youtube app");
+			driver.pressKeyCode(AndroidKeyCode.BACK);
+		}
+		driver.findElementById("com.sphero.sprk:id/playable_media_overlay");
+		clickButton("x");
+	}
+	
+	@Test(dataProvider = "program-tabs")
+	public void ReportProgram(String tab){
+
+		if(signedIn==false){
+			signIn("ffsi4","yyyyyy","instructor",true,false,false);
+		}
+		
+		clickNavBar("programs");
+		clickTab(tab);
+		clickProgram();
+		driver.findElementById("com.sphero.sprk:id/fragment_container");
+		//first comment flag button
+		driver.findElementByXPath("//android.widget.LinearLayout[@index='4']//*[@resource-id='com.sphero.sprk:id/flag_icon']").click();
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
+		clickButton("no");
+		driver.findElementByXPath("//android.widget.LinearLayout[@index='4']//*[@resource-id='com.sphero.sprk:id/flag_icon']").click();
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
+		clickButton("yes");
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/fragment_container")));
+		driver.findElementByXPath("//android.widget.LinearLayout[@index='4']//*[@resource-id='com.sphero.sprk:id/flag_icon']").click();
+		Assert.assertEquals(driver.findElementsByXPath("//*[@resouce-id='com.sphero.sprk:id/dialog_title' and text='Flag']").size(), 0);
+		System.out.println("Flag dialog did not appear, comment already flagged");
+		//implement toast check using teseract OCR
+		
+	}
+	
+	@DataProvider(name = "data-provider")
+    public Object[][] dataProviderMethod() {
+        return new Object[][] { { "programs","sphero" }, { "programs","community"}, { "activities","sphero"}, { "activities","community"} };
+	}
+	
+	
+		//Check unauthenticated user gate prompt visibility
+	@Test(dataProvider = "data-provider")
+	public void userGates(String nav, String tab){
+		
+		testLogTitle("User gates when signed out on " + nav + " - " + tab);
+		
+		if(signedIn==true){
+			signOut();
+			clickNavBar("programs");
+			driver.findElementById("com.sphero.sprk:id/programs_onboarding_overlay");
+			driver.findElementById("com.sphero.sprk:id/onboarding_add_new_program_button").click();
 			clickButton("no");
-			System.out.println("Clicked Maybe Later");
-			//Click on Make a Copy
-			clickCopy();
-			driver.findElementById("com.sphero.sprk:id/content");
-			System.out.println("Copy User Gate Present");
-			clickButton("no");
-			System.out.println("Clicked Maybe Later");
-			
-			clickClose();
-			clickMediaTab();
-			clickAddMedia();
-			driver.findElementById("com.sphero.sprk:id/content");
-			System.out.println("Media User Gate Present");
-			clickButton("no");
-			clickMenu();
-			clickMenuItem("build");
+		}
+		
+		clickNavBar(nav);
+		clickTab(tab);
+		
+		clickProgram();
+		if(tab.equals("community")){
+			wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/fragment_container")));
 		}
 
+		//like
+		System.out.println("Like button gate");
+		GateDialog("com.sphero.sprk:id/is_favourite_icon","no");
+		GateDialog("com.sphero.sprk:id/is_favourite_icon","yes");
+		clickButton("x");
+		
+		
+		//report
+		System.out.println("Report button gate");
+		GateDialog("com.sphero.sprk:id/flag_section","no");
+		GateDialog("com.sphero.sprk:id/flag_section","yes");
+		clickButton("x");
+		
+		//write comment
+		System.out.println("Write Comment button gate");
+		GateDialog("com.sphero.sprk:id/write_comment_button","no");
+		GateDialog("com.sphero.sprk:id/write_comment_button","yes");
+		clickButton("x");
+		
+		
+		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 500);
+		
+		System.out.println("Comment flag button gate");
+		if(driver.findElementsById("com.sphero.sprk:id/date").size()>0){
+			GateDialog("com.sphero.sprk:id/flag_button","no");
+			GateDialog("com.sphero.sprk:id/flag_button","yes");
+			clickButton("x");
+			
+		}
+		else{
+			System.out.println("No comments, user gate check skipped");
+		}
+		
+		String currentNavBar = driver.findElementById("com.sphero.sprk:id/bottom_navigation_small_item_title").getText();
+		//Click on Make a Copy
+		if(currentNavBar.equals("Activities")||driver.findElementByXPath("//android.support.v7.a.d/android.widget.TextView[@text='Community']").isSelected()){
+		
+		System.out.println("View button gate");
+		GateDialog("com.sphero.sprk:id/view_button","no");
+		GateDialog("com.sphero.sprk:id/view_button","yes");
+		clickButton("x");
+		
+		System.out.println("Copy button gate");
+		GateDialog("com.sphero.sprk:id/copy_button","no");
+		GateDialog("com.sphero.sprk:id/copy_button","yes");
+		clickButton("x");
+		}
+	}
 	
+	public void GateDialog(String s,String a){
+		driver.findElementById(s).click();
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
+		String dialogTitle = driver.findElementById("com.sphero.sprk:id/dialog_title").getText();
+		Assert.assertEquals(dialogTitle, "Sign In Required");
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/positive_action").getText(), "Sign In Now");
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/negative_action").getText(), "Maybe Later");
+		clickButton(a);
+	}
+
+
 }

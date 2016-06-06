@@ -1,6 +1,12 @@
 package start;
 
+import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
@@ -21,16 +27,26 @@ public class myPrograms extends Testscript {
 	
 	//Unit test for counting programs
 	public int countProgram(){
-		String xpath = "//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout";
-		List <WebElement> ListByXpath = driver.findElements(By.xpath(xpath));
-		return ListByXpath.size();   
+		if(driver.findElementsById("com.sphero.sprk:id/no_content_container").size()==1){
+			return 0;
+		}
+		else{
+			String xpath = "//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout";
+			List <WebElement> ListByXpath = driver.findElements(By.xpath(xpath));
+			return ListByXpath.size();   
+		}
 	}
 	
 	//@Test
 	public void countPrograms(){
-		String xpath = "//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout";
-		List <WebElement> ListByXpath = driver.findElements(By.xpath(xpath));
-		System.out.println(ListByXpath.size());
+		if(driver.findElementsById("com.sphero.sprk:id/no_content_container").size()==1){
+			System.out.println("0");
+		}
+		else{
+			String xpath = "//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout";
+			List <WebElement> ListByXpath = driver.findElements(By.xpath(xpath));
+			System.out.println(ListByXpath.size());
+		}
 	}
 	
 	@Test
@@ -261,82 +277,397 @@ public class myPrograms extends Testscript {
 		System.out.println("All programs deleted");
 	}
 
+	@Test
+	public void postCommentPrograms(){
+		String uuid = UUID.randomUUID().toString();
+		System.out.println("uuid = " + uuid);
+		clickNavBar("programs");
+		clickProgram();
+		driver.findElementById("com.sphero.sprk:id/fragment_container");
+		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
+		driver.findElement(By.id("com.sphero.sprk:id/write_comment_button")).click();
+		driver.findElementByXPath("//android.widget.TextView[@text='Write A Comment']");
+		driver.findElementById("com.sphero.sprk:id/submit_button").click();
+		driver.findElementById("com.sphero.sprk:id/error_message");
+		driver.findElementById("com.sphero.sprk:id/review_body").sendKeys(uuid);
+		driver.findElementById("com.sphero.sprk:id/cancel_button").click();
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/dialog_title").getText(), "Discard Changes");
+		clickButton("no");
+		driver.findElementById("com.sphero.sprk:id/submit_button").click();
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/fragment_container")));
+		System.out.println("Comment Posted");
+		System.out.println( new SimpleDateFormat("MMM d, YYYY | h:mm a").format(Calendar.getInstance().getTime()) );
+		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
+		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/body' and @text='" + uuid +"']");
+		
+		
+		/*
+		String dateFromDB = "";
+		SimpleDateFormat parser = new SimpleDateFormat("MMM d, YYYY | h:mm a");
+		Date yourDate = parser.parse(dateFromDB);
+		
+		System.out.println( new SimpleDateFormat("MMM d, YYYY | h:mm a").format(Calendar.getInstance().getTime()) );
+		Calendar calendar = Calendar.getInstance();
+		*/
+		
+		
+		//System.out.println( new Date().toString().substring(4, 10) );
+	}
+	
+	@Test
+	public void flagCommentPrograms(){
+		String uuid = UUID.randomUUID().toString();
+		System.out.println("uuid = " + uuid);
+		uuid = uuid + "flag";
+		clickNavBar("programs");
+		clickProgram();
+		driver.findElementById("com.sphero.sprk:id/fragment_container");
+		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
+		driver.findElement(By.id("com.sphero.sprk:id/write_comment_button")).click();
+		driver.findElementById("com.sphero.sprk:id/review_body").sendKeys(uuid);
+		driver.findElementById("com.sphero.sprk:id/submit_button").click();
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/fragment_container")));
+		System.out.println("Comment Posted");
+		System.out.println( new SimpleDateFormat("MMM d, YYYY | h:mm a").format(Calendar.getInstance().getTime()) );
+		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
+		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/body' and @text='" + uuid +"']");
+		//first comment flag button
+		driver.findElementByXPath("//android.widget.LinearLayout[@index='4']//*[@resource-id='com.sphero.sprk:id/flag_button']").click();
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
+		clickButton("no");
+		driver.findElementByXPath("//android.widget.LinearLayout[@index='4']//*[@resource-id='com.sphero.sprk:id/flag_button']").click();
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
+		clickButton("yes");
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/fragment_container")));
+		driver.findElementByXPath("//android.widget.LinearLayout[@index='4']//*[@resource-id='com.sphero.sprk:id/flag_button']").click();
+		Assert.assertEquals(driver.findElementsByXPath("//*[@resouce-id='com.sphero.sprk:id/dialog_title' and text='Flag']").size(), 0);
+		System.out.println("Flag dialog did not appear, comment already flagged");
+		//implement toast check using teseract OCR
+		
+	}
 	
 	@Test
 	public void viewProgramStatus(){
 		
-		WebElement publicProgram = driver.findElement(By.id("com.sphero.sprk:id/program_image"));
+		clickNavBar("Home");
+		clickTab("Profile");
+		//check if signed in as programstatus account
+		//check if sign out button is visible
+		if(driver.findElementsById("com.sphero.sprk:id/sign_out_button").size()==1){
+			//check if accoun is not programstatus
+			if(!("programstatus").equals(driver.findElementById("com.sphero.sprk:id/profile_text_field").getText())){
+			//sign out then sign in as programstatus
+			signOut();
+			signIn("programstatus","yyyyyy","instructor", true, false, false);
+			}
+		}
+		else{
+			//if the sign out btuton is not visible then sign in as program status
+			signIn("programstatus","yyyyyy","instructor", true, false, false);
+		}
+
+		clickNavBar("Programs");
 		
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
 		
-		List<WebElement> programs = driver.findElements(By.xpath("//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout"));
+		List<WebElement> programs = driver.findElements(By.xpath("//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout//*[@resource-id='com.sphero.sprk:id/status_indicator']"));
+		HashSet<String> statuslist = new HashSet<String>();
 		for(WebElement temp : programs){
-			System.out.println(temp.getText());
+			statuslist.add(temp.getText());
 		}
 		
-		checkPublicProgramOrder();
+		HashSet<String> comparestatus = new HashSet<String>();
+		comparestatus.add("In Review");
+		comparestatus.add("Public");
+		comparestatus.add("Rejected");
+		comparestatus.add("Private");
+		
+		//check if the 4 program types exists
+		Assert.assertEquals(statuslist,comparestatus);
+		
+		for(WebElement temp : programs){
+			if(temp.getText().equals("Public")){
+				temp.click();
+				System.out.println("Clicked Public program");
+				break;
+			}
+		}
 		
 		//overflow button for public
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='0']//android.widget.ImageButton")).click();
-		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Public"); //check status
-		Assert.assertEquals(driver.findElement(By.id("com.sphero.sprk:id/program_public_switch")).getAttribute("checked"), "true");//check switch status
-		driver.findElement(By.id("com.sphero.sprk:id/share_button")); //check visibility of share btuton
-		clickSphero();
-		clickSave();
-		clickButton("no");
-		clickSphero();
-		clickClose();
+		driver.findElementById("com.sphero.sprk:id/share_button"); //check share button is visible
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Public"); //check status in program details
+		driver.findElementById("com.sphero.sprk:id/edit_button").click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Public"); //check status in edit
+		Assert.assertEquals(driver.findElement(By.id("com.sphero.sprk:id/public_switch")).getAttribute("checked"), "true");//check switch status
 		
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='1']//android.widget.ImageButton")).click();
+		//toggle switch check status
+		driver.findElement(By.id("com.sphero.sprk:id/public_switch")).click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Private");
+		driver.findElement(By.id("com.sphero.sprk:id/public_switch")).click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Public");
+		//driver.findElement(By.id("com.sphero.sprk:id/share_button")); //check visibility of share btuton
+		clickButton("sphero");
+		clickButton("back");
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/dialog_title").getText(), "Discard Changes");
+		clickButton("no");
+		
+		driver.findElementById("com.sphero.sprk:id/dialog_action").click();
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/dialog_title").getText(), "Continue editing?");
+		clickButton("no");
+		clickButton("sphero");
+		driver.findElementById("com.sphero.sprk:id/dialog_action").click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Public");
+		clickButton("x");
+		
+		/*
+		for(WebElement temp : programs){
+			if(temp.getText().equals("Rejected")){
+				temp.click();
+				break;
+			}
+		}
+		
+		
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Rejected");
+		driver.findElementById("com.sphero.sprk:id/edit_button").click();
 		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Rejected");
 		Assert.assertEquals(driver.findElement(By.id("com.sphero.sprk:id/program_public_switch")).getAttribute("checked"), "false");
-		clickClose();
-		
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='2']//android.widget.ImageButton")).click();
+		//toggle status
+		driver.findElement(By.id("com.sphero.sprk:id/public_switch")).click();
 		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review");
-		Assert.assertEquals(driver.findElement(By.id("com.sphero.sprk:id/program_public_switch")).getAttribute("checked"), "true");
-		clickSphero();
-		clickSave();
-		clickButton("no");
-		clickSphero();//undo
-		clickClose();
-
-	}
-	
-	public void checkPublicProgramOrder(){
-		String program0 = driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='0']//android.widget.TextView[@index='0']")).getText();
-		String program1 = driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='1']//android.widget.TextView[@index='0']")).getText();
-		String program2 = driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='2']//android.widget.TextView[@index='0']")).getText();
-		String program3 = driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='3']//android.widget.TextView[@index='0']")).getText();
+		driver.findElement(By.id("com.sphero.sprk:id/public_switch")).click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Rejected");
+		clickButton("ollie");
+		clickButton("back");
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/dialog_title").getText(), "Discard Changes");
+		clickButton("yes");
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Rejected");
+		clickButton("x");
+		*/
 		
-		//0 public, 1 rejected, pos 2 : in review , pos3: video
-		Assert.assertEquals(program0, "public");
-		Assert.assertEquals(program1, "rejected");
-		Assert.assertEquals(program2, "inreview");
-		Assert.assertEquals(program3, "video");
+		for(WebElement temp : programs){
+			if(temp.getText().equals("In Review")){
+				temp.click();
+				System.out.println("Clicked Review program");
+				break;
+			}
+		}
+		Assert.assertEquals(driver.findElementsById("com.sphero.sprk:id/share_button").size(),0); //check share button is invisible
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review"); //check status in program details
+		driver.findElementById("com.sphero.sprk:id/edit_button").click(); // go to edit
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review"); //check status in edit
+		Assert.assertEquals(driver.findElement(By.id("com.sphero.sprk:id/public_switch")).getAttribute("checked"), "true");//check switch status
+		
+		//toggle switch check status
+		driver.findElement(By.id("com.sphero.sprk:id/public_switch")).click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Private");
+		driver.findElement(By.id("com.sphero.sprk:id/public_switch")).click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review");
+		
+		clickButton("bb8");
+		clickButton("back");
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/dialog_title").getText(), "Discard Changes");
+		clickButton("no");
+		
+		driver.findElementById("com.sphero.sprk:id/dialog_action").click();
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/dialog_title").getText(), "Continue editing?");
+		clickButton("no");
+		clickButton("bb8");//toggle back to original
+		clickButton("save");
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review");
+		clickButton("x");
+		
+		for(WebElement temp : programs){
+			if(temp.getText().equals("Private")){
+				temp.click();
+				System.out.println("Clicked Private program");
+				break;
+			}
+		}
+		Assert.assertEquals(driver.findElementsById("com.sphero.sprk:id/share_button").size(),0); //check share button is invisible
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Private"); //check status in program details
+		driver.findElementById("com.sphero.sprk:id/edit_button").click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Private"); //check status in edit
+		Assert.assertEquals(driver.findElement(By.id("com.sphero.sprk:id/public_switch")).getAttribute("checked"), "false");//check switch status
+		
+		//toggle switch check status
+		driver.findElement(By.id("com.sphero.sprk:id/public_switch")).click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review");
+		driver.findElement(By.id("com.sphero.sprk:id/public_switch")).click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Private");
+
+		clickButton("bb8");
+		clickButton("back");
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/dialog_title").getText(), "Discard Changes");
+		clickButton("no");
+		
+		//set to in review
+		driver.findElement(By.id("com.sphero.sprk:id/public_switch")).click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review");
+		clickButton("save");
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/single_image")));
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review"); // program details changed from private to inreview
+		
+		//changing back from in review to private
+		driver.findElementById("com.sphero.sprk:id/edit_button").click();
+		driver.findElement(By.id("com.sphero.sprk:id/public_switch")).click();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Private");
+		clickButton("save");
+		clickButton("yes");
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/single_image")));
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Private");
+		clickButton("x");
+
+
 	}
 	
 	@Test
 	public void publicProgramGate() throws Exception{
 		
-		checkPublicProgramOrder();
-		//overflow button for public
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='0']")).click();
-		clickButton("yes"); //go to canvas
-		leaveCanvas();
-		checkToolBarTitle("Build");
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='0']")).click();
-		clickButton("no"); //cancel
+		clickNavBar("Home");
+		clickTab("Profile");
+		//check if signed in as programstatus account
+		//check if sign out button is visible
+		if(driver.findElementsById("com.sphero.sprk:id/sign_out_button").size()==1){
+			//check if accoun is not programstatus
+			if(!("programstatus").equals(driver.findElementById("com.sphero.sprk:id/profile_text_field").getText())){
+			//sign out then sign in as programstatus
+			signOut();
+			signIn("programstatus","yyyyyy","instructor", true, false, false);
+			}
+		}
+		else{
+			//if the sign out btuton is not visible then sign in as program status
+			signIn("programstatus","yyyyyy","instructor", true, false, false);
+		}
+
+		clickNavBar("Programs");
 		
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='1']")).click();
-		leaveCanvas();
-		checkToolBarTitle("Build");
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='2']")).click();
+		waitLong.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
+		
+		//checkPublicProgramOrder();
+		//overflow button for public
+		List<WebElement> programs = driver.findElements(By.xpath("//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout//*[@resource-id='com.sphero.sprk:id/status_indicator']"));
+		HashSet<String> statuslist = new HashSet<String>();
+		for(WebElement temp : programs){
+			statuslist.add(temp.getText());
+		}
+		
+		HashSet<String> comparestatus = new HashSet<String>();
+		comparestatus.add("In Review");
+		comparestatus.add("Public");
+		comparestatus.add("Rejected");
+		comparestatus.add("Private");
+		
+		//check if the 4 program types exists
+		Assert.assertEquals(statuslist,comparestatus);
+		
+		
+		//public program gate
+		for(WebElement temp : programs){
+			if(temp.getText().equals("Public")){
+				temp.click();
+				break;
+			}
+		}
+		
+		String programname = driver.findElementById("com.sphero.sprk:id/dialog_title").getText();
+		driver.findElementById("com.sphero.sprk:id/share_button"); //check share button is visible
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Public");
+		driver.findElementById("com.sphero.sprk:id/view_button").click();
+		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
 		clickButton("yes"); //continue
 		leaveCanvas();
-		checkToolBarTitle("Build");
-		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.FrameLayout[@index='2']")).click();
-		clickButton("no"); //cancel	
-		checkPublicProgramOrder();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Public");
+		driver.findElementById("com.sphero.sprk:id/view_button").click();
+		clickButton("no"); //cancel
+		driver.findElementById("com.sphero.sprk:id/view_button").click();
+		driver.findElementById("com.sphero.sprk:id/neutral_action").click(); //make a copy
+		clickButton("save");
+		leaveCanvas();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Public");
+		clickButton("x");
+		
+		//check name of copy
+		String copyname = driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView//*[@resource-id='com.sphero.sprk:id/program_name' and @index='0']")).getText();
+		Assert.assertEquals( copyname, "Copy of " + programname );
+		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView//*[@resource-id='com.sphero.sprk:id/program_name' and @index='0']")).click();
+		//check status of copy
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Private");
+		//delete copy
+		driver.findElementById("com.sphero.sprk:id/edit_button").click();
+		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.3), 500);
+		driver.findElementById("com.sphero.sprk:id/delete_button").click();
+		clickButton("delete");
+		
+		//in review gate
+		for(WebElement temp : programs){
+			if(temp.getText().equals("In Review")){
+				temp.click();
+				break;
+			}
+		}
+		programname = driver.findElementById("com.sphero.sprk:id/dialog_title").getText();
+		Assert.assertEquals(driver.findElementsById("com.sphero.sprk:id/share_button").size(),0); //check share button is invisible
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review");
+		driver.findElementById("com.sphero.sprk:id/view_button").click();
+		clickButton("yes"); //continue
+		leaveCanvas();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review");
+		driver.findElementById("com.sphero.sprk:id/view_button").click();
+		clickButton("no"); //cancel
+		driver.findElementById("com.sphero.sprk:id/view_button").click();
+		driver.findElementById("com.sphero.sprk:id/neutral_action").click();
+		clickButton("save");
+		leaveCanvas();
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "In Review");
+		clickButton("x");
+		
+		//check name of copy
+		copyname = driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView//*[@resource-id='com.sphero.sprk:id/program_name' and @index='0']")).getText();
+		Assert.assertEquals( copyname, "Copy of " + programname );
+		driver.findElement(By.xpath("//android.support.v7.widget.RecyclerView//*[@resource-id='com.sphero.sprk:id/program_name' and @index='0']")).click();
+		//check status of copy
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Private");
+		//delete copy
+		driver.findElementById("com.sphero.sprk:id/edit_button").click();
+		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.3), 500);
+		driver.findElementById("com.sphero.sprk:id/delete_button").click();
+		clickButton("delete");
+		
+		//private no gate
+		for(WebElement temp : programs){
+			if(temp.getText().equals("Private")){
+				temp.click();
+				break;
+			}
+		}
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Private");
+		driver.findElementById("com.sphero.sprk:id/view_button").click();
+		leaveCanvas();
+		clickButton("x");
+		
+		//rejected no gate
+		for(WebElement temp : programs){
+			if(temp.getText().equals("Rejected")){
+				temp.click();
+				break;
+			}
+		}
+		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/status_text").getText(), "Private");
+		Assert.assertEquals(driver.findElementsById("com.sphero.sprk:id/share_button").size(),0); //check share button is invisible
+		driver.findElementById("com.sphero.sprk:id/view_button").click();
+		leaveCanvas();
+		clickButton("x");
+		
+		
+	
 	}
 	
 	

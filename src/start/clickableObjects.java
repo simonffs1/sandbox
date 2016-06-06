@@ -29,6 +29,5 @@ public interface clickableObjects {
 	void clickAddMedia();
 	
 	//Pocketnav
-	void clickConnectRobot();
 
 }

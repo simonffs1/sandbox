@@ -15,8 +15,10 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
+import org.testng.ITestResult;
 import org.testng.Reporter;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -26,6 +28,7 @@ import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 
 import io.appium.java_client.AppiumDriver;
+import io.appium.java_client.NetworkConnectionSetting;
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.android.AndroidKeyCode;
@@ -65,7 +68,7 @@ public class Testscript extends androidInterface{
 	public void setup(String port) throws MalformedURLException, InterruptedException {
 		
 		File appDir = new File("src");
-		File app = new File(appDir, "ll-1.5.0.166-staging.apk");
+		File app = new File(appDir, "ll-1.5.0.168-staging.apk");
 		
 		//appium specific configuration
 		DesiredCapabilities cap = new DesiredCapabilities();
@@ -73,6 +76,8 @@ public class Testscript extends androidInterface{
 		cap.setCapability(MobileCapabilityType.DEVICE_NAME,"Android device");
 		cap.setCapability(MobileCapabilityType.APP,app.getAbsolutePath());
 		cap.setCapability("newCommandTimeout", 240); //prevent server time out for 240 seconds
+		cap.setCapability("noReset", true);
+		cap.setCapability("fullReset", false);
 		
 		//create objects
 		driver = new AndroidDriver(new URL("http://127.0.0.1:"+port+"/wd/hub"),cap);
@@ -89,12 +94,24 @@ public class Testscript extends androidInterface{
 		screenHeight = driver.manage().window().getSize().getHeight();
 		screenWidth = driver.manage().window().getSize().getWidth();
 		
+		System.out.println(driver.currentActivity());
+		
+		//check network connection
+		NetworkConnectionSetting networkConnection = driver.getNetworkConnection();
+		if(networkConnection.wifiEnabled()==false){
+			Assert.fail("Wifi is disabled");
+		}
+		if(networkConnection.airplaneModeEnabled()==true){
+			Assert.fail("Airplane Mode is enabled");
+		}
 		try{
 			driver.findElementById("com.sphero.sprk:id/negative_action").click();
 		}
 		catch(Exception e){
-			System.out.println("Bluetooth dialog did not appearo on splash");
+			System.out.println("Bluetooth dialog did not appear on splash");
 		}
+		
+		System.out.println(driver.currentActivity());
 		
 		//check landing page is home - feed
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/bottom_nav")));
@@ -106,7 +123,7 @@ public class Testscript extends androidInterface{
 		Boolean selectedTab = driver.findElementByXPath("//android.support.v7.a.d[@index='0']/android.widget.TextView[@text='Feed']").isSelected();
 		Assert.assertTrue(selectedTab);
 		
-		System.out.println(driver.currentActivity());
+		
 		
 		
 		
@@ -128,29 +145,15 @@ public class Testscript extends androidInterface{
 	//Verify screen is build before each case
 	public void startPoint() throws Exception{
 		
-		//Check if app crashed
-		try{
-			driver.findElement(By.id("android:id/message"));
-			driver.closeApp();
-			driver.launchApp();
-		}
-		catch(Exception crash){
-			System.out.println("Crash not detected");
-		}
-		
-		//back out of edit screen 
-		if(uploadSuccess==false){
-			System.out.println("Uploading failed, backing out to nav bar");
-			while(driver.findElements(By.id("com.sphero.sprk:id/bottom_nav")).size()==0){
-				driver.pressKeyCode(AndroidKeyCode.BACK);
-				Thread.sleep(1500);
-				try{
-					clickButton("yes");
-				}
-				catch(Exception e){
-					System.out.println("No dialog was found blocking exit");
-				}
+		//check if app has been relaunched by checking splash screen
+		if(driver.currentActivity().toLowerCase().contains("programmingactivity")){
+			try{
+				driver.findElementById("com.sphero.sprk:id/negative_action").click();
 			}
+			catch(Exception e){
+				System.out.println("Bluetooth dialog did not appearo on splash");
+			}
+			//wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/bottom_nav")));
 		}
 		
 		uploadSuccess = true; //reset back to original state
@@ -159,7 +162,11 @@ public class Testscript extends androidInterface{
 		
 	}
 	
-	
+	@Test
+	public void launchclose(){
+		driver.closeApp();
+		driver.launchApp();
+	}
 	
 	@DataProvider(name = "signInInfo")
     public Object[][] dataProviderMethod1() {
@@ -286,15 +293,28 @@ public class Testscript extends androidInterface{
 		
 		testLogTitle("Sign Out");
 		
+		boolean student = false;
+		
 		clickNavBar("home");
 		clickTab("Profile");
+		String account = driver.findElementById("com.sphero.sprk:id/profile_text_field").getText();
+		if(driver.findElementsById("com.sphero.sprk:id/grade_container").size()==1){
+			student = true;
+		}
+		
 		clickButton("Sign out");
 		clickButton("positive");
 		wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("android:id/progress")));
 		driver.findElements(By.id("com.sphero.sprk:id/sign_in_button"));
 		driver.findElements(By.id("com.sphero.sprk:id/sign_in_text"));
 		
-		System.out.println("Sign out success");
+		if (student = true){
+			System.out.println("Sign out of student " + account + " success");
+		}
+		else{
+			System.out.println("Sign out of instructor " + account + " success");
+		}
+		
 		signedIn=false;
 	}
 	
@@ -691,11 +711,7 @@ public void scrollToBottom() throws Exception{
 	
 	
 	
-	@DataProvider(name = "data-provider")
-    public Object[][] dataProviderMethod() {
-        return new Object[][] { { "exploreprograms" }, { "media" } };
-	}
-	
+
 	
 	
 	@Test
@@ -831,17 +847,22 @@ public void scrollToBottom() throws Exception{
 	}
 	
 	public void leaveCanvas() throws Exception{
+		
 		int attempt = 0 ;
 		while (!(driver.currentActivity()).toLowerCase().contains("unity")){
 			System.out.println("Canvas loading...");
-			Thread.sleep(500);
+			Thread.sleep(1000);
 		}
 		String s = driver.currentActivity();
 		while ((driver.currentActivity()).toLowerCase().contains("unity")){
-			System.out.println("In Canvas");
-			driver.pressKeyCode(AndroidKeyCode.BACK);
-			Thread.sleep(1500);
-			attempt++;
+			
+			Thread.sleep(5000);
+			if(driver.currentActivity().toLowerCase().contains("unity")){
+				System.out.println("In Canvas");
+				driver.pressKeyCode(AndroidKeyCode.BACK);
+				Thread.sleep(3000);
+				attempt++;
+			}
 			if(attempt>10){
 				Assert.fail("Could not leave canvas");
 				break;
@@ -966,15 +987,21 @@ public void Firefox(String s){
 		System.out.println("Deleted  request email, closing firefox");
 	}
 
+
+	@AfterMethod
+	public void restartAppOnFailure(ITestResult testResult){
+		if (testResult.getStatus() == ITestResult.FAILURE) {
+			System.out.println("Test failed, closed app...");
+			driver.closeApp();
+			System.out.println("Relaunching app...");
+			driver.launchApp();
+		}
+	}
 	
-	
-
-
-
 	@AfterClass
 	public void tearDown() throws InterruptedException{
-		System.out.println("Sleep for 3 seconds then quit");
-		Thread.sleep(3000);
+		System.out.println("End of testing. Shutting down...");
+		Thread.sleep(2000);
 		driver.quit();
 	}
 
