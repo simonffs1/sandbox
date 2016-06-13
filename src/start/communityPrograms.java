@@ -10,6 +10,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.testng.Assert;
 import org.testng.Reporter;
 import org.testng.annotations.DataProvider;
+import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import io.appium.java_client.android.AndroidKeyCode;
@@ -28,13 +29,16 @@ public class communityPrograms extends myPrograms {
 	}
 
 	
-	@Test(dataProvider = "program-tabs")
-	public void copyProgram(String s) throws Exception{
-		testLogTitle("Copy a " + s + " Program");
+	@Test//(dataProvider = "program-tabs")
+	@Parameters("section")
+	public void copyProgram(String section) throws Exception{
+		testLogTitle("Copy a " + section + " Program");
 		
+		/* can copy sphero program signed out
 		if(signedIn==false){
 			signIn("ffsi4","yyyyyy","instructor",true,false,false);
 		}
+		*/
 		
 		clickNavBar("programs");
 		if(driver.findElementsById("com.sphero.sprk:id/no_content_container").size()==1){
@@ -45,11 +49,10 @@ public class communityPrograms extends myPrograms {
 		}
 		
 		int numOfProg = countProgram();
-		clickTab(s);
+		clickTab(section);
 		clickProgram();
 		driver.findElementById("com.sphero.sprk:id/copy_button").click();
 		clickButton("yes"); //save
-		clickButton("yes"); //ok
 		clickButton("x");
 		clickTab("My Programs");
 		if(numOfProg!=0){
@@ -57,7 +60,7 @@ public class communityPrograms extends myPrograms {
 		}
 		int numOfProgPost = countProgram();
 		Assert.assertEquals(numOfProgPost, numOfProg+1);
-		System.out.println("A copy of the " + s + " program has been made");
+		System.out.println("A copy of the " + section + " program has been made");
 	}
 	
 	@Test //open a sample program and copy
@@ -148,18 +151,17 @@ public class communityPrograms extends myPrograms {
     public Object[][] dataProviderMethod2() {
         return new Object[][] { {"sphero"},  {"community"} };
 	}
-	@Test(dataProvider = "program-tabs")
-	public void viewProgram(String s) throws Exception{
+	@Test//(dataProvider = "program-tabs")
+	@Parameters("section")
+	public void viewProgram(String section) throws Exception{
 		
-		testLogTitle("View " + s + " programs");
+		testLogTitle("View " + section + " programs");
 		
-		s = s.toLowerCase();
+		section = section.toLowerCase();
 		
-		if(signedIn==false){
-			signIn("ffsqat","1","instructor",true,false,false);
+		if(signedIn==false && section.intern()!="sphero"){
+			signIn("ffsi4","yyyyyy","instructor",true,false,false);
 		}
-		
-		Boolean progress = false;
 		
 		clickNavBar("programs");
 		
@@ -172,16 +174,17 @@ public class communityPrograms extends myPrograms {
 		
 		int numOfProg = countProgram();
 		
-		clickTab(s);
+		clickTab(section);
 	
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
 		
+		//Find a program without a video
 		if(driver.findElementsById("com.sphero.sprk:id/video_badge").size()>0){
 			System.out.println("Program with a video exists");
 		}
 		
 		for(int i=0;i<4;i++){
-			if(s.equals("sphero") && i==0){
+			if(section.equals("sphero") && i==0){
 				i++; //to skip canvas tutorial card
 			}
 			if(driver.findElementsByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='"+i+"']//*[@resource-id='com.sphero.sprk:id/video_badge']").size()==0){
@@ -208,41 +211,21 @@ public class communityPrograms extends myPrograms {
 		driver.findElement(By.id("com.sphero.sprk:id/name")); //username
 	    //driver.findElement(By.id("com.sphero.sprk:id/robot_section")); //robot
 		driver.findElement(By.id("com.sphero.sprk:id/favourite_section")); //like
-		driver.findElement(By.id("com.sphero.sprk:id/flag_section")); //report
 		driver.findElement(By.id("com.sphero.sprk:id/copy_button"));
 		driver.findElement(By.id("com.sphero.sprk:id/view_button"));
 		driver.findElement(By.id("com.sphero.sprk:id/dialog_close")); //x
 		
-		//driver.findElement(By.id("com.sphero.sprk:id/share_button")).click();
-		//driver.findElement(By.id("com.sphero.sprk:id/close_button")).click();
-		/*
+		//if sphero or community, find the share button and report
 		
-		try{
-			driver.findElements(By.id("com.sphero.sprk:id/progress_bar"));
-			System.out.println("Spinner was found");
-			progress = driver.findElements(By.id("com.sphero.sprk:id/progress_bar")).size()>0;
+		if(section.intern()!="my programs"){
+			driver.findElement(By.id("com.sphero.sprk:id/share_button"));
+			driver.findElement(By.id("com.sphero.sprk:id/flag_icon"));
 		}
-		catch(Exception preload){
-			System.out.println("No spinner was found");
-		}
-		*/
 		
-		//handle progress indicator blocking tap
-		/*
-		try{
-			Boolean progress = driver.findElements(By.id("com.sphero.sprk:id/progress_bar")).size()>0;
-			if(progress == true){
-				System.out.println("Waiting for progress spinner to disappear");
-				while(driver.findElement(By.id("com.sphero.sprk:id/progress_bar")).isDisplayed()){
-					Thread.sleep(2000);
-				}
-			}
+		if(driver.findElementsById("com.sphero.sprk:id/write_comment_button").size()==0){
+			driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
 		}
-		catch(Exception e){
-			System.out.println("No progress indicator was found");
-		}
-		*/
-		
+		driver.findElementsById("com.sphero.sprk:id/write_comment_button");
 		
 		driver.findElementById("com.sphero.sprk:id/single_image").click();
 		driver.findElementById("com.sphero.sprk:id/fullscreen_image");
@@ -267,6 +250,7 @@ public class communityPrograms extends myPrograms {
 			clickTab("My Programs");
 			Reporter.log("Viewed an invalid format lab file, did not enter canvas");
 			System.out.println("Invalid lab file");
+			Assert.assertEquals(numOfProg, countProgram());
 		}
 	}
 	@Test
@@ -311,15 +295,16 @@ public class communityPrograms extends myPrograms {
 		clickButton("x");
 	}
 	
-	@Test(dataProvider = "program-tabs")
-	public void ReportProgram(String tab){
+	@Test
+	@Parameters("section")
+	public void ReportProgram(String section){
 
 		if(signedIn==false){
 			signIn("ffsi4","yyyyyy","instructor",true,false,false);
 		}
 		
 		clickNavBar("programs");
-		clickTab(tab);
+		clickTab(section);
 		clickProgram();
 		driver.findElementById("com.sphero.sprk:id/fragment_container");
 		//first comment flag button
@@ -339,15 +324,16 @@ public class communityPrograms extends myPrograms {
 	
 	@DataProvider(name = "data-provider")
     public Object[][] dataProviderMethod() {
-        return new Object[][] { { "programs","sphero" }, { "programs","community"}, { "activities","sphero"}, { "activities","community"} };
+        return new Object[][] { {"sphero" }, {"community"}};
 	}
 	
 	
-		//Check unauthenticated user gate prompt visibility
+	//Check unauthenticated user gate prompt visibility
 	@Test(dataProvider = "data-provider")
-	public void userGates(String nav, String tab){
+	//@Parameters("gate")
+	public void userGatesPrograms(String gate){
 		
-		testLogTitle("User gates when signed out on " + nav + " - " + tab);
+		testLogTitle("User gates when signed out on " + gate + " in Programs");
 		
 		if(signedIn==true){
 			signOut();
@@ -357,11 +343,11 @@ public class communityPrograms extends myPrograms {
 			clickButton("no");
 		}
 		
-		clickNavBar(nav);
-		clickTab(tab);
+		clickNavBar("programs");
+		clickTab(gate);
 		
 		clickProgram();
-		if(tab.equals("community")){
+		if(gate.equals("community")){
 			wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/fragment_container")));
 		}
 
@@ -400,18 +386,20 @@ public class communityPrograms extends myPrograms {
 		
 		String currentNavBar = driver.findElementById("com.sphero.sprk:id/bottom_navigation_small_item_title").getText();
 		//Click on Make a Copy
-		if(currentNavBar.equals("Activities")||driver.findElementByXPath("//android.support.v7.a.d/android.widget.TextView[@text='Community']").isSelected()){
+		if(driver.findElementByXPath("//android.support.v7.a.d/android.widget.TextView[@text='Community']").isSelected()){
 		
-		System.out.println("View button gate");
-		GateDialog("com.sphero.sprk:id/view_button","no");
-		GateDialog("com.sphero.sprk:id/view_button","yes");
-		clickButton("x");
-		
-		System.out.println("Copy button gate");
-		GateDialog("com.sphero.sprk:id/copy_button","no");
-		GateDialog("com.sphero.sprk:id/copy_button","yes");
-		clickButton("x");
+			System.out.println("View button gate");
+			GateDialog("com.sphero.sprk:id/view_button","no");
+			GateDialog("com.sphero.sprk:id/view_button","yes");
+			clickButton("x");
+			
+			System.out.println("Copy button gate");
+			GateDialog("com.sphero.sprk:id/copy_button","no");
+			GateDialog("com.sphero.sprk:id/copy_button","yes");
+			clickButton("x");
+			
 		}
+		clickButton("x");
 	}
 	
 	public void GateDialog(String s,String a){

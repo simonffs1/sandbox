@@ -17,6 +17,22 @@ import org.testng.annotations.Test;
 import io.appium.java_client.android.AndroidKeyCode;
 
 public class myPrograms extends Testscript {
+	
+	@Test
+	public void Onboarding() throws Exception{
+		if(signedIn==true){
+			signOut();
+		}
+		else{
+			signIn("ffsi4","yyyyyy","instructor",true,false,false);
+			signOut();
+		}
+		clickNavBar("Programs");
+		driver.findElementById("com.sphero.sprk:id/programs_onboarding_overlay");
+		driver.findElementById("com.sphero.sprk:id/onboarding_add_new_program_button").click();
+		clickButton("yes");
+		leaveCanvas();
+	}
 
 	@Test
 	public void SortBy(){
@@ -33,6 +49,7 @@ public class myPrograms extends Testscript {
 		else{
 			String xpath = "//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout";
 			List <WebElement> ListByXpath = driver.findElements(By.xpath(xpath));
+			System.out.println(ListByXpath.size());
 			return ListByXpath.size();   
 		}
 	}
@@ -40,7 +57,7 @@ public class myPrograms extends Testscript {
 	//@Test
 	public void countPrograms(){
 		if(driver.findElementsById("com.sphero.sprk:id/no_content_container").size()==1){
-			System.out.println("0");
+			System.out.println("0 Programs");
 		}
 		else{
 			String xpath = "//android.support.v7.widget.RecyclerView/descendant::android.widget.FrameLayout";
@@ -75,28 +92,61 @@ public class myPrograms extends Testscript {
 		System.out.println(currentprograms);
 		Assert.assertEquals(currentprograms,initialprograms+1);
 		System.out.println("Program created successfully");
-		if(signedIn==true){
-			driver.findElement(By.id("com.sphero.sprk:id/uploading_spinner"));
-			System.out.println("Sync indicator found");
-		}
 	}
 	
 	
 	@Test 
-	public void copyMyProgram(){
-		clickNavBar("Programs");
+	public void copyMyProgram() throws Exception{
+		
 		
 		testLogTitle("Copy My Programs while signed in");
+		
+		if(signedIn==false){
+			signIn("ffsi4","yyyyyy","instructor",true,false,false);
+		}
+		
+		clickNavBar("Programs");
+		
+		if(countProgram()==0){
+			createProgram();
+		}
+		
 		int numOfProg = countProgram();
 		clickProgram(); //click first program
 		driver.findElementById("com.sphero.sprk:id/copy_button").click();
 		clickButton("save"); //confirm
-		clickButton("ok"); //ok
 		clickButton("x");
 		
 		//wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/dialog_title")));
 		Assert.assertEquals(countProgram(), numOfProg+1);
 		System.out.println("Program copied successfully");
+		//*check name 
+	}
+	@Test 
+	public void viewMyProgram() throws Exception{
+		
+		
+		testLogTitle("View My Program canvas while signed in");
+		
+		if(signedIn==false){
+			signIn("ffsi4","yyyyyy","instructor",true,false,false);
+		}
+		clickNavBar("Programs");
+		
+		if(countProgram()==0){
+			createProgram();
+		}
+		
+		int numOfProg = countProgram();
+		
+		clickProgram(); //click first program
+		driver.findElementById("com.sphero.sprk:id/view_button").click();
+		clickButton("save"); //confirm
+		clickButton("x");
+		
+		//wait.until(ExpectedConditions.invisibilityOfElementLocated(By.id("com.sphero.sprk:id/dialog_title")));
+		Assert.assertEquals(countProgram(), numOfProg+1);
+		System.out.println("Program canvas viewed successfully");
 		//*check name 
 	}
 	
@@ -106,15 +156,22 @@ public class myPrograms extends Testscript {
 		
 		testLogTitle("Edit My Programs while signed in");
 		
+		if(signedIn==false){
+			signIn("ffsi4","yyyyyy","instructor",true,false,false);
+		}
 		
 		clickNavBar("Programs");
+		
+		if(countProgram()==0){
+			createProgram();
+		}
 		
 		clickProgram();
 		
 		boolean wasPublic = false;
 		uploadSuccess=false;
 		driver.findElementById("com.sphero.sprk:id/edit_button").click();
-		//aattach image
+		//attach image
 		driver.findElementById("com.sphero.sprk:id/add_media_button").click();
 		//Image button
 		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/title' and @text='Image']").click();
@@ -199,6 +256,10 @@ public class myPrograms extends Testscript {
 	public void deleteMyProgramSignIn(){
 		testLogTitle("Delete Programs while signed in");
 		
+		if(signedIn==false){
+			signIn("ffsi4","yyyyyy","instructor",true,false,false);
+		}
+		
 		clickNavBar("programs");
 		
 		int numOfProg = countProgram();
@@ -216,10 +277,22 @@ public class myPrograms extends Testscript {
 	}
 	
 	@Test
-	public void deleteRenameProgramSignedOut() throws Exception{
-		testLogTitle("Delete Programs while signed in");
+	public void ViewRenameDeleteProgramSignedOut() throws Exception{
+		testLogTitle("Delete and Rename Programs signedOut");
+
+		if(signedIn==true){
+			signOut();
+			clickNavBar("programs");
+			driver.findElementById("com.sphero.sprk:id/programs_onboarding_overlay");
+			driver.findElementById("com.sphero.sprk:id/onboarding_add_new_program_button").click();
+			clickButton("no");
+		}
 		
 		clickNavBar("programs");
+		
+		if(countProgram()==0){
+			createProgram();
+		}
 		
 		int initialprograms = countProgram();
 		System.out.println(initialprograms);
@@ -276,62 +349,89 @@ public class myPrograms extends Testscript {
 		}
 		System.out.println("All programs deleted");
 	}
-
+	
 	@Test
-	public void postCommentPrograms(){
+	public void likeButton() throws InterruptedException{
+		clickNavBar("programs");
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
+		driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='0']").click();
+		
+		//before
+		String numLikesString = driver.findElementById("com.sphero.sprk:id/like_count").getText();
+		String pre[] = numLikesString.split("\\s+");
+		int likeCount = Integer.parseInt(pre[0]);
+		System.out.println(likeCount);
+		
+		//click like
+		driver.findElementById("com.sphero.sprk:id/is_favourite_icon").click();
+		
+		//wait 5 seconds
+		Thread.sleep(5000);
+		
+		//after
+		numLikesString = driver.findElementById("com.sphero.sprk:id/like_count").getText();
+		String post[] = numLikesString.split("\\s+");
+		int postLikeCount = Integer.parseInt(post[0]);
+		System.out.println(postLikeCount);
+		
+		if(postLikeCount<likeCount){
+			System.out.println("Previously liked program, unliked");
+		}
+		else{
+			System.out.println("Liked program");
+		}
+		
+		clickButton("x");
+		
+		if(postLikeCount>0){
+			wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='0']//*[resource-id='com.sphero.sprk:id/likes_counter']")));
+			String likeRibbon = driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='0']//*[resource-id='com.sphero.sprk:id/likes_counter']").getText();
+			int likeRibbonInt = Integer.parseInt(likeRibbon);
+			
+			Assert.assertEquals(likeRibbonInt, postLikeCount);
+			System.out.println("Like ribbon count matches");
+		}
+		else{
+			int likeRibbonInt = driver.findElementsByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='0']//*[resource-id='com.sphero.sprk:id/likes_counter']").size();
+			Assert.assertEquals(likeRibbonInt, 0);
+			System.out.println("Like ribbon invisibility for program with 0 likes");
+		}
+	}
+	
+	public void postComment(){
 		String uuid = UUID.randomUUID().toString();
 		System.out.println("uuid = " + uuid);
-		clickNavBar("programs");
-		clickProgram();
 		driver.findElementById("com.sphero.sprk:id/fragment_container");
-		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
+		//scroll if not visible
+		if(driver.findElementsById("com.sphero.sprk:id/write_comment_button").size()==0){
+			driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
+		}
 		driver.findElement(By.id("com.sphero.sprk:id/write_comment_button")).click();
 		driver.findElementByXPath("//android.widget.TextView[@text='Write A Comment']");
-		driver.findElementById("com.sphero.sprk:id/submit_button").click();
-		driver.findElementById("com.sphero.sprk:id/error_message");
 		driver.findElementById("com.sphero.sprk:id/review_body").sendKeys(uuid);
-		driver.findElementById("com.sphero.sprk:id/cancel_button").click();
-		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
-		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/dialog_title").getText(), "Discard Changes");
-		clickButton("no");
-		driver.findElementById("com.sphero.sprk:id/submit_button").click();
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/fragment_container")));
-		System.out.println("Comment Posted");
-		System.out.println( new SimpleDateFormat("MMM d, YYYY | h:mm a").format(Calendar.getInstance().getTime()) );
 		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
 		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/body' and @text='" + uuid +"']");
-		
-		
-		/*
-		String dateFromDB = "";
-		SimpleDateFormat parser = new SimpleDateFormat("MMM d, YYYY | h:mm a");
-		Date yourDate = parser.parse(dateFromDB);
-		
+		System.out.println("Comment Posted");
 		System.out.println( new SimpleDateFormat("MMM d, YYYY | h:mm a").format(Calendar.getInstance().getTime()) );
-		Calendar calendar = Calendar.getInstance();
-		*/
-		
-		
-		//System.out.println( new Date().toString().substring(4, 10) );
 	}
 	
 	@Test
 	public void flagCommentPrograms(){
+		clickNavBar("programs");
+		clickProgram();
+		flagComment();
+	}
+	
+	public void flagComment(){
 		String uuid = UUID.randomUUID().toString();
 		System.out.println("uuid = " + uuid);
 		uuid = uuid + "flag";
 		clickNavBar("programs");
 		clickProgram();
-		driver.findElementById("com.sphero.sprk:id/fragment_container");
-		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
-		driver.findElement(By.id("com.sphero.sprk:id/write_comment_button")).click();
-		driver.findElementById("com.sphero.sprk:id/review_body").sendKeys(uuid);
-		driver.findElementById("com.sphero.sprk:id/submit_button").click();
-		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/fragment_container")));
-		System.out.println("Comment Posted");
-		System.out.println( new SimpleDateFormat("MMM d, YYYY | h:mm a").format(Calendar.getInstance().getTime()) );
-		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
-		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/body' and @text='" + uuid +"']");
+
+		postComment();
+		
 		//first comment flag button
 		driver.findElementByXPath("//android.widget.LinearLayout[@index='4']//*[@resource-id='com.sphero.sprk:id/flag_button']").click();
 		System.out.println(driver.findElementById("com.sphero.sprk:id/dialog_title").getText());
@@ -344,7 +444,6 @@ public class myPrograms extends Testscript {
 		Assert.assertEquals(driver.findElementsByXPath("//*[@resouce-id='com.sphero.sprk:id/dialog_title' and text='Flag']").size(), 0);
 		System.out.println("Flag dialog did not appear, comment already flagged");
 		//implement toast check using teseract OCR
-		
 	}
 	
 	@Test

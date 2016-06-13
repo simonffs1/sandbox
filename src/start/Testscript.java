@@ -3,13 +3,16 @@ package start;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.MarionetteDriver;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -53,7 +56,7 @@ public class Testscript extends androidInterface{
 	Boolean uploadSuccess;
 	Boolean signedIn;
 	Boolean signedUp;
-	FirefoxDriver web;
+	WebDriver web;
 	private SoftAssert softAssert = new SoftAssert();
 	
 	//device screen
@@ -68,7 +71,7 @@ public class Testscript extends androidInterface{
 	public void setup(String port) throws MalformedURLException, InterruptedException {
 		
 		File appDir = new File("src");
-		File app = new File(appDir, "ll-1.5.0.168-staging.apk");
+		File app = new File(appDir, "ll-1.5.0.174-staging.apk");
 		
 		//appium specific configuration
 		DesiredCapabilities cap = new DesiredCapabilities();
@@ -178,8 +181,14 @@ public class Testscript extends androidInterface{
             {"307201","307201342","student",false,true,true}
             };
     }
+	
+	@Test(dataProvider = "signInInfo")
+	public void signInAll(String username,String password, String type, Boolean valid, Boolean Clever, Boolean signOut){
+		signIn(username,password,type,valid,Clever,signOut);
+	}
     
-    @Test(dataProvider = "signInInfo",invocationCount=10)
+    @Test//(dataProvider = "signInInfo",invocationCount=10)
+    @Parameters({"username","password","type","valid","Clever","signOut"})
     public void signIn(String username,String password, String type, Boolean valid, Boolean Clever, Boolean signOut){
         testLogTitle("Sign in");
         System.out.println("Signing in with username:" + username + "| password:" + password);
@@ -189,7 +198,11 @@ public class Testscript extends androidInterface{
         
         //check account type before running
         if("instructor"!=type.intern() && "student"!=type.intern()){
-            Assert.fail("Wrong expected account types, test case not run");
+            Assert.fail("Wrong expected account types, test case cannot run");
+        }
+        
+        if(signedIn==true){
+        	signOut();
         }
         
         clickNavBar("Home");
@@ -398,6 +411,8 @@ public class Testscript extends androidInterface{
 		Thread.sleep(2000); //sign up button to shift
 		driver.findElementById("com.sphero.sprk:id/create_account_button").click();
 		
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/newsletter_sign_up_checkbox")));
+		
 		//newsletter screen
 		driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").click();
 		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").getAttribute("checked"), "true"); 
@@ -461,6 +476,8 @@ public class Testscript extends androidInterface{
 		Thread.sleep(2000); //sign up button to shift
 		driver.findElementById("com.sphero.sprk:id/continue_signup_button").click();
 		
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/newsletter_sign_up_checkbox")));
+		
 		//newsletter screen
 		driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").click();
 		Assert.assertEquals(driver.findElementById("com.sphero.sprk:id/newsletter_sign_up_checkbox").getAttribute("checked"), "true"); 
@@ -494,7 +511,8 @@ public class Testscript extends androidInterface{
 		}
 		driver.findElementById("com.sphero.sprk:id/verify_account_button").click();
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/sign_out_button")));
-		System.out.println("Instructor ccount created successfully");
+		System.out.println("Instructor account created successfully");
+		System.out.println("Account:" + instructor_username + " / " + password);
 		signOut();
 		signedUp = false;
 
@@ -892,7 +910,7 @@ public void scrollToBottom() throws Exception{
 		
 		System.out.println("Launching Firefox to activate account through email");
 		
-		web = new FirefoxDriver();
+		web = new MarionetteDriver();
 		web.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		
 		WebDriverWait waitWeb = new WebDriverWait(web,30);
@@ -901,19 +919,18 @@ public void scrollToBottom() throws Exception{
 		// Store the current window handle
 		String winHandleBefore = web.getWindowHandle();
 		System.out.println(winHandleBefore);
-		
-		web.findElementByXPath(".//*[@id='Email']").sendKeys("ffsqatsignup@gmail.com");
-		web.findElementByXPath(".//*[@id='next']").click();
-		web.findElementByXPath(".//*[@id='Passwd']").sendKeys("middlefinger");
-		web.findElementByXPath(".//*[@id='signIn']").click();
+
+		web.findElement(By.xpath(".//*[@id='Email']")).sendKeys("ffsqatsignup@gmail.com");
+		web.findElement(By.xpath(".//*[@id='next']")).click();
+		web.findElement(By.xpath(".//*[@id='Passwd']")).sendKeys("middlefinger");
+		web.findElement(By.xpath(".//*[@id='signIn']")).click();
 		waitWeb.until(ExpectedConditions.urlContains("#inbox"));
 
 		//click on email
-		web.findElementByCssSelector("td[tabindex='-1']").click();
+		web.findElement(By.cssSelector("td[tabindex='-1']")).click();
 		
-
 		//click activate
-		web.findElementByXPath("//a[text()='Activate Account']").click();
+		web.findElement(By.xpath("//a[text()='Activate Account']")).click();
 		
 		// Switch to new window opened
 		for(String winHandle : web.getWindowHandles()){
@@ -941,7 +958,7 @@ public void scrollToBottom() throws Exception{
 		waitWeb.until(ExpectedConditions.urlContains("#inbox"));
 		
 		//delete welcome
-		web.findElementByCssSelector("td[tabindex='-1']").click();
+		web.findElement(By.cssSelector("td[tabindex='-1']")).click();
 		action.sendKeys(String.valueOf('\u0023')).perform();
 		web.quit();
 		
@@ -950,7 +967,7 @@ public void scrollToBottom() throws Exception{
 		signedUp = true;
 	}
 	
-public void Firefox(String s){
+	public void Firefox(String s){
 		
 		System.out.println("Launching Firefox to check account request email");
 		
@@ -964,16 +981,16 @@ public void Firefox(String s){
 		String winHandleBefore = web.getWindowHandle();
 		System.out.println(winHandleBefore);
 		
-		web.findElementByXPath(".//*[@id='Email']").sendKeys("ffsqatsignup@gmail.com");
-		web.findElementByXPath(".//*[@id='next']").click();
-		web.findElementByXPath(".//*[@id='Passwd']").sendKeys("middlefinger");
-		web.findElementByXPath(".//*[@id='signIn']").click();
+		web.findElement(By.xpath(".//*[@id='Email']")).sendKeys("ffsqatsignup@gmail.com");
+		web.findElement(By.xpath(".//*[@id='next']")).click();
+		web.findElement(By.xpath(".//*[@id='Passwd']")).sendKeys("middlefinger");
+		web.findElement(By.xpath(".//*[@id='signIn']")).click();
 		waitWeb.until(ExpectedConditions.urlContains("#inbox"));
 
 		//click on email
-		web.findElementByCssSelector("td[tabindex='-1']").click();
+		web.findElement(By.cssSelector("td[tabindex='-1']")).click();
 		//find sentence
-		web.findElementByXPath(".//*[text()='" + s + " asked to join the SPRK Lightning Lab. If you approve, follow the steps below:']");
+		web.findElement(By.xpath(".//*[text()='" + s + " asked to join the SPRK Lightning Lab. If you approve, follow the steps below:']"));
 		System.out.println("Request email received");
 
 		//keyboard shortcut # to delete

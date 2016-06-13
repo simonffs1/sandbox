@@ -53,7 +53,10 @@ public class androidInterface implements clickableObjects {
 		System.out.println("Clicked " + item + " in nav bar");
 		
 		//chcek the name of the button is shown to match expected
-		driver.findElementById("com.sphero.sprk:id/bottom_navigation_small_item_title").getText().toLowerCase().equals(item);
+		
+		if(driver.findElementsById("com.sphero.sprk:id/programs_onboarding_overlay").size()==0){
+			driver.findElementById("com.sphero.sprk:id/bottom_navigation_small_item_title").getText().toLowerCase().equals(item);
+		}
 		
 		allTabs = driver.findElements(By.xpath("//android.support.v7.a.d/android.widget.TextView"));
 		
@@ -265,12 +268,12 @@ public class androidInterface implements clickableObjects {
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
 	
 		if(driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='0']//*[@resource-id='com.sphero.sprk:id/program_name']").getText().equals("Canvas Tutorial")){
-			driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='1']").click();
 			System.out.println(driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='1']//*[@resource-id='com.sphero.sprk:id/program_name']").getText());
+			driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='1']").click();
 		}
 		else{
-			driver.findElementById("com.sphero.sprk:id/program_image").click();
 			System.out.println(driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='0']//*[@resource-id='com.sphero.sprk:id/program_name']").getText());
+			driver.findElementById("com.sphero.sprk:id/program_image").click();
 		}
 		System.out.println("Clicked a program");
 	}

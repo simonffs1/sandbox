@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite name="Suite" parallel="false" preserve-order="true">
+<parameter name="port" value="4723"/>
+
+<!-- Sign In information -->
+<parameter name="username" value="ffsi4"/>
+<parameter name="password" value="yyyyyy"/>
+<parameter name="type" value="instructor"/>
+<parameter name="valid" value="true"/>
+<parameter name="Clever" value="false"/>
+<parameter name="signOut" value="false"/>
+ 
+<parameter name="section" value="sphero"/>
+<parameter name="gate" value="community"/>
+<!--
+  <test name="My Programs Signed out">
+  	<classes>
+  	    
+  	    <class name="start.myPrograms">
+  	        <methods>
+  	            <include name="Onboarding"/>
+  	            <include name="createProgram"/>
+  	            <include name="ViewRenameDeleteProgramSignedOut"/>
+  	        </methods>
+  	    </class>
+  	</classes>
+  </test>
+  
+  <test name = "Sphero/Community Signed out">
+      <classes>
+          <class name="start.communityPrograms">
+  	        <methods>
+  	            <include name="copyProgram"/>
+  	            <include name="viewProgram"/>
+  	            <include name="userGatesPrograms"/>
+  	        </methods>
+          </class>
+          
+      </classes>
+  </test>
+
+    <test name = "Sign In">
+      <classes>
+          <class name="start.Testscript">
+  	        <methods>
+				<include name="signIn"/>
+  	        </methods>
+          </class>
+      </classes>
+  </test>
+-->
+  <test name = "My Programs Signed In">
+      <classes>
+          <class name="start.myPrograms">
+  	        <methods>
+  	            <include name="createProgram"/>
+  	            <include name="copyMyProgram"/>
+  	            <include name="editMyProgram"/>
+  	            <include name="viewMyProgram"/>
+  	            <include name="deleteMyProgramSignIn"/>
+  	        </methods>
+          </class>
+      </classes>
+  </test>
+  
+  
+  
+  
+</suite> <!-- Suite -->

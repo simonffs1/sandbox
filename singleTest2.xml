@@ -5,9 +5,9 @@
   <test name="Single test">
   <parameter name="port" value="4723"/>
   	<classes>
-  	    <class name="start.Testscript">
+  	    <class name="start.myPrograms">
   	        <methods>
-  	            <include name="pocketNav"/>
+  	            <include name="ViewRenameDeleteProgramSignedOut"/>
   	        </methods>
   	    </class>
   	</classes>

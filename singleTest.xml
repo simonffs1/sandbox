@@ -5,14 +5,16 @@
  <parameter name="instructor_username" value="ffsi5"/>
  <parameter name="password" value="yyyyyy"/>
  <parameter name="instructor_email" value="ffsqatsignup+i5@gmail.com"/>
-  <parameter name="student_username" value="ffss2"/>
+ <parameter name="student_username" value="ffss2"/>
  <parameter name="student_email" value="ffsqatsignup+s2@gmail.com"/>
+ 
+ <parameter name="section" value="community"/>
  
   <test name="Single test">
   	<classes>
-  	    <class name="start.communityPrograms">
+  	    <class name="start.Workbook">
   	        <methods>
-  	            <include name="viewProgram"/>
+  	            <include name="newActivity"/>
   	        </methods>
   	    </class>
   	</classes>

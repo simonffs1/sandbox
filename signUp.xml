@@ -5,14 +5,13 @@
  
 
  <test name="Sign up">
- <parameter name="instructor_username" value="ffsqatsignupi1"/>
+ <parameter name="instructor_username" value="ffsi4"/>
  <parameter name="password" value="yyyyyy"/>
- <parameter name="instructor_email" value="ffsqatsignup+i1@gmail.com"/>
+ <parameter name="instructor_email" value="ffsqatsignup+i4@gmail.com"/>
  <classes>
  <class name="start.Testscript">
  <methods>
  <include name="signUpInstructor"/>
- <include name="signOut"/>
  </methods>
  </class>
  </classes>
