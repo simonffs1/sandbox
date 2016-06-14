@@ -77,7 +77,7 @@ public class myPrograms extends Testscript {
 			initialprograms = countProgram();
 		}
 		else{
-			//check for no proggrams message
+			//check for no programs message
 			driver.findElementById("com.sphero.sprk:id/no_content_message");
 		}
 		System.out.println(initialprograms);
@@ -398,6 +398,13 @@ public class myPrograms extends Testscript {
 		}
 	}
 	
+	public void postCommentMyPrograms(){
+		
+		clickNavBar("programs");
+		clickProgram();
+		postComment();
+	}
+	
 	public void postComment(){
 		String uuid = UUID.randomUUID().toString();
 		System.out.println("uuid = " + uuid);
@@ -409,11 +416,36 @@ public class myPrograms extends Testscript {
 		driver.findElement(By.id("com.sphero.sprk:id/write_comment_button")).click();
 		driver.findElementByXPath("//android.widget.TextView[@text='Write A Comment']");
 		driver.findElementById("com.sphero.sprk:id/review_body").sendKeys(uuid);
+		driver.findElementById("com.sphero.sprk:id/submit_button").click();
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/fragment_container")));
 		driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
 		driver.findElementByXPath("//*[@resource-id='com.sphero.sprk:id/body' and @text='" + uuid +"']");
 		System.out.println("Comment Posted");
 		System.out.println( new SimpleDateFormat("MMM d, YYYY | h:mm a").format(Calendar.getInstance().getTime()) );
+	}
+	
+	
+	@Test
+	//post 200 comments
+	public void postMultipleComments(){
+		
+		clickNavBar("programs");
+		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
+		clickProgram();
+		driver.findElementById("com.sphero.sprk:id/fragment_container");
+		String uuid = "comment";
+		for(int i=0;i<=200;i++){
+			uuid = UUID.randomUUID().toString();
+			//scroll if not visible
+			if(driver.findElementsById("com.sphero.sprk:id/write_comment_button").size()==0 || driver.findElementById("com.sphero.sprk:id/write_comment_button").getLocation().getY()>(screenHeight*0.8)){
+				driver.swipe((int)(screenWidth*0.75), (int)(screenHeight*0.5), (int)(screenWidth*0.75), (int)(screenHeight*0.2), 700);
+			}
+			driver.findElement(By.id("com.sphero.sprk:id/write_comment_button")).click();
+			driver.findElementById("com.sphero.sprk:id/review_body").sendKeys(uuid);
+			driver.findElementById("com.sphero.sprk:id/submit_button").click();
+			wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/fragment_container")));
+			System.out.println("Comment " + i + " Posted");
+		}
 	}
 	
 	@Test

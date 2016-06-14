@@ -266,7 +266,6 @@ public class androidInterface implements clickableObjects {
 	//Shared between build and explore
 	public void clickProgram(){
 		wait.until(ExpectedConditions.presenceOfElementLocated(By.id("com.sphero.sprk:id/program_image")));
-	
 		if(driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='0']//*[@resource-id='com.sphero.sprk:id/program_name']").getText().equals("Canvas Tutorial")){
 			System.out.println(driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='1']//*[@resource-id='com.sphero.sprk:id/program_name']").getText());
 			driver.findElementByXPath("//android.support.v7.widget.RecyclerView/android.widget.RelativeLayout[@index='1']").click();

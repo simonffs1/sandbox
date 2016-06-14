@@ -71,13 +71,12 @@ public class communityPrograms extends myPrograms {
 		int numOfProg = 0;
 		
 		clickTab("Sphero");
-
+		clickProgram();
+		
 		while(numOfProg<=200){
-			clickProgram();
 			driver.findElementById("com.sphero.sprk:id/copy_button").click();
 			clickButton("yes"); //confirm
-			clickButton("yes"); //ok
-			System.out.println("Program # " + numOfProg +"has been made");
+			System.out.println("Program #" + numOfProg +" has been made");
 			numOfProg++;
 		}
 	}

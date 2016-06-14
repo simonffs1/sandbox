@@ -7,7 +7,7 @@
   	<classes>
   	    <class name="start.myPrograms">
   	        <methods>
-  	            <include name="ViewRenameDeleteProgramSignedOut"/>
+  	            <include name="postMultipleComments"/>
   	        </methods>
   	    </class>
   	</classes>
